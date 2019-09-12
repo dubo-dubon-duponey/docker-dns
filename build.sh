@@ -20,6 +20,8 @@ BUILD_DATE="$(date -R)"
 
 # Docker settings
 export DOCKER_CONTENT_TRUST=1
+export DOCKER_CLI_EXPERIMENTAL=enabled
+
 dv="$(docker version | grep "^ Version")"
 dv="${dv#*:}"
 dv="${dv##* }"
@@ -29,7 +31,7 @@ if [ "${dv%%.*}" -lt "19" ]; then
 fi
 
 # Build invocation
-docker buildx create --name "$IMAGE_OWNER-$IMAGE_NAME"
+docker buildx create --node "$IMAGE_OWNER-${IMAGE_NAME}0" --name "$IMAGE_OWNER-$IMAGE_NAME"
 docker buildx use "$IMAGE_OWNER-$IMAGE_NAME"
 docker buildx build --platform "$PLATFORMS" \
   --label dockerfile.repository="$GIT_REPO" \

@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 
-exec coredns -conf /config/coredns.conf
+[ -e /config/config.conf ] || cp config.conf /config/ || {
+  >&2 printf "Failed to create default config file. Permissions issue likely.\n"
+  exit 1
+}
+
+exec coredns -conf /config/config.conf "$@"
