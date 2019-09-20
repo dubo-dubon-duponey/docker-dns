@@ -56,7 +56,7 @@ COPY        runtime .
 
 # Set links
 RUN         mkdir $CONFIG && mkdir $DATA && \
-            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $DATA && chown -R $BUILD_UID:$BUILD_GID . \
+            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $DATA && chown -R $BUILD_UID:$BUILD_GID . && \
             ln -sf /dev/stdout access.log && \
             ln -sf /dev/stderr error.log
 
