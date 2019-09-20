@@ -11,11 +11,13 @@ A docker image for [CoreDNS](https://coredns.io/).
 ## Run
 
 ```bash
+chown -R 1000:1000 "[host_path]"
+
 docker run -d \
     --net=bridge \
     --volume [host_path]:/config \
     --publish 53:1053/udp \
-    --publish 5553:5553 \
+    --publish 853:1853 \
     --cap-drop ALL \
     dubodubonduponey/coredns:v1
 ```
@@ -24,7 +26,7 @@ docker run -d \
 
 ### Network
 
- * if you intend on running on port 53, you must use `bridge` and map the port
+ * if you intend on running on port 53, you must use `bridge` and publish the port
  * if using `host` or `macvlan`, you will not be able to use a privileged port
 
 ### Configuration
@@ -38,11 +40,14 @@ This default file sets-up a forwarder to DNS-over-TLS cloudflare-dns.com.
 You can rebuild the image using the following arguments:
 
  * BUILD_UID
- * BUILD_USER
  * BUILD_GID
- * BUILD_GROUP
 
 At runtime, you may tweak the following environment variables:
+
+ * UPSTREAM_NAME
+ * UPSTREAM_SERVERS
+
+Or even tweak the following for control over which internal ports are being used
 
  * DNS_PORT
  * TLS_PORT

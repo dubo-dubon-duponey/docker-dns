@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-[ -e /config/config.conf ] || cp config.conf /config/ || {
+# If no config, try to have the default one, and fail if this fails
+[ -e /config/config.conf ] || cp config/* /config/ || {
   >&2 printf "Failed to create default config file. Permissions issue likely.\n"
   exit 1
 }

@@ -19,7 +19,7 @@ WORKDIR     /build
 ARG         COREDNS_VERSION=37b9550d62685d450553437776978518ccca631b
 ARG         TARGETPLATFORM
 
-# Checkout logspout upstream, install glide and run it
+# Checkout and build
 WORKDIR     /go/src/github.com/coredns/coredns
 
 RUN         git clone https://github.com/coredns/coredns.git .
@@ -38,19 +38,27 @@ ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 
 WORKDIR     /dubo-dubon-duponey
 
+# Build time variable
+ARG         BUILD_USER=dubo-dubon-duponey
+ARG         BUILD_UID=1000
+ARG         BUILD_GROUP=$BUILD_USER
+ARG         BUILD_GID=$BUILD_UID
+
+ARG         CONFIG=/config
+ARG         DATA=/data
+
 # Get relevant bits from builder
 COPY        --from=builder /etc/ssl/certs /etc/ssl/certs
 COPY        --from=builder /go/src/github.com/coredns/coredns/coredns /bin/coredns
 
-# Get relevant local files
-COPY        entrypoint.sh .
-COPY        config/* .
+# Get relevant local files into cwd
+COPY        runtime .
 
-# Build time variable
-ARG         BUILD_USER=dubo-dubon-duponey
-ARG         BUILD_UID=1042
-ARG         BUILD_GROUP=$BUILD_USER
-ARG         BUILD_GID=$BUILD_UID
+# Set links
+RUN         mkdir $CONFIG && mkdir $DATA && \
+            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $DATA && \
+            ln -sf /dev/stdout access.log && \
+            ln -sf /dev/stderr error.log
 
 # Create user
 RUN         addgroup --system --gid $BUILD_GID $BUILD_GROUP && \
@@ -63,11 +71,14 @@ RUN         addgroup --system --gid $BUILD_GID $BUILD_GROUP && \
 USER        $BUILD_USER
 
 ENV         DNS_PORT=1053
-ENV         TLS_PORT=5553
+ENV         TLS_PORT=1853
+ENV         UPSTREAM_SERVERS="tls://1.1.1.1 tls://1.0.0.1"
+ENV         UPSTREAM_NAME="cloudflare-dns.com"
 
 EXPOSE      $DNS_PORT/udp
 EXPOSE      $TLS_PORT
 
-VOLUME      /config
+VOLUME      $CONFIG
+VOLUME      $DATA
 
 ENTRYPOINT  ["./entrypoint.sh"]
