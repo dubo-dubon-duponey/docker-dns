@@ -46,6 +46,10 @@ At runtime, you may tweak the following environment variables:
 
  * UPSTREAM_NAME
  * UPSTREAM_SERVERS
+ 
+To modify the upstream DNS servers that the resolver is using.
+
+Additionally, OVERWRITE_CONFIG controls whether an existing config file would be overwritten or not (default is not).
 
 Or even tweak the following for control over which internal ports are being used
 

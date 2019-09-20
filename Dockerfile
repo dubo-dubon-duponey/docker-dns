@@ -56,7 +56,7 @@ COPY        runtime .
 
 # Set links
 RUN         mkdir $CONFIG && mkdir $DATA && \
-            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $DATA && \
+            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $DATA && chown -R $BUILD_UID:$BUILD_GID . \
             ln -sf /dev/stdout access.log && \
             ln -sf /dev/stderr error.log
 
@@ -74,6 +74,7 @@ ENV         DNS_PORT=1053
 ENV         TLS_PORT=1853
 ENV         UPSTREAM_SERVERS="tls://1.1.1.1 tls://1.0.0.1"
 ENV         UPSTREAM_NAME="cloudflare-dns.com"
+ENV         OVERWRITE_CONFIG=""
 
 EXPOSE      $DNS_PORT/udp
 EXPOSE      $TLS_PORT
