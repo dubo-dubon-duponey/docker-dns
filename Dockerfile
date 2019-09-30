@@ -91,8 +91,8 @@ RUN         addgroup --system --gid $BUILD_GID $BUILD_GROUP && \
 
 USER        $BUILD_USER
 
-ENV         DOMAIN="somewhere.tld"
-ENV         EMAIL="dubo-dubon-duponey@jsboot.space"
+ENV         DOMAIN=""
+ENV         EMAIL=""
 ENV         STAGING=""
 ENV         OVERWRITE_CONFIG=""
 
