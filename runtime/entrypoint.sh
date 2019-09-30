@@ -36,8 +36,13 @@ certs::renew(){
 
   [ -e "/certs/certificates/$domain.key" ] || command="run"
 
+  >&2 printf "Running command: %s" "lego  --domains=\"$domain\" \
+        --accept-tos --email=\"$email\" --path=/certs --tls $staging --pem \
+        --tls.port=:${HTTPS_PORT} \
+        ${command}"
+
   lego  --domains="$domain" \
-        --accept-tos --email="$email" --path=/certs --tls "$staging" --pem \
+        --accept-tos --email="$email" --path=/certs --tls ${staging} --pem \
         --tls.port=:${HTTPS_PORT} \
         ${command}
 }
