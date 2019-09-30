@@ -65,7 +65,7 @@ ARG         BUILD_GROUP=$BUILD_USER
 ARG         BUILD_GID=$BUILD_UID
 
 ARG         CONFIG=/config
-ARG         DATA=/data
+ARG         CERTS=/certs
 
 # Get relevant bits from builder
 COPY        --from=builder /etc/ssl/certs                             /etc/ssl/certs
@@ -76,8 +76,8 @@ COPY        --from=builder /go/src/github.com/go-acme/lego/dist/lego  /bin/lego
 COPY        runtime .
 
 # Set links
-RUN         mkdir $CONFIG && mkdir $DATA && \
-            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $DATA && chown -R $BUILD_UID:$BUILD_GID . && \
+RUN         mkdir $CONFIG && mkdir $CERTS && \
+            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $CERTS && chown -R $BUILD_UID:$BUILD_GID . && \
             ln -sf /dev/stdout access.log && \
             ln -sf /dev/stderr error.log
 
@@ -91,22 +91,22 @@ RUN         addgroup --system --gid $BUILD_GID $BUILD_GROUP && \
 
 USER        $BUILD_USER
 
+ENV         DOMAIN="somewhere.tld"
+ENV         EMAIL="dubo-dubon-duponey@jsboot.space"
+ENV         STAGING=""
+ENV         OVERWRITE_CONFIG=""
+
 ENV         DNS_PORT=1053
 ENV         TLS_PORT=1853
 ENV         HTTPS_PORT=1443
 ENV         UPSTREAM_SERVERS="tls://1.1.1.1 tls://1.0.0.1"
 ENV         UPSTREAM_NAME="cloudflare-dns.com"
-ENV         OVERWRITE_CONFIG=""
-
-ENV         DOMAIN="mydns.example.com"
-ENV         EMAIL="foo@bar.com"
-ENV         STAGING=""
 
 EXPOSE      $DNS_PORT/udp
 EXPOSE      $TLS_PORT
 EXPOSE      $HTTPS_PORT
 
 VOLUME      $CONFIG
-VOLUME      $DATA
+VOLUME      $CERTS
 
 ENTRYPOINT  ["./entrypoint.sh"]
