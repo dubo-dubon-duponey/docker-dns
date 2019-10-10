@@ -85,7 +85,10 @@ if [ "$DOMAIN" ]; then
 
   # Now run in the background to renew 45 days before expiration
   loop "$DOMAIN" "$EMAIL" "$STAGING" &
-fi
 
-# Get coredns started - the reload plugin will take care of certificates update
-exec coredns -conf /config/coredns.conf "$@"
+  # Get coredns started - the reload plugin will take care of certificates update
+  exec coredns -conf /config/coredns.conf "$@"
+else
+  # Get coredns started - the reload plugin will take care of certificates update
+  exec coredns -conf /config/coredns-no-tls.conf "$@"
+fi
