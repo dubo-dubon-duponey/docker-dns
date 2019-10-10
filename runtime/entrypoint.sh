@@ -4,7 +4,7 @@
 config::writable(){
   local folder="$1"
   [ -w "$folder" ] || {
-    >&2 printf "$folder is not writable. Check your mount permissions.\n"
+    >&2 printf "%s is not writable. Check your mount permissions.\n" "$folder"
     exit 1
   }
 }

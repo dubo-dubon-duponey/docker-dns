@@ -29,7 +29,7 @@ REVISION="$(git rev-parse HEAD)$(if ! git diff --no-ext-diff --quiet --exit-code
 # XXX this is dirty, resolve ssh aliasing to github by default
 URL="$(git remote show -n origin | grep "Fetch URL")"
 URL="${URL#*Fetch URL: }"
-URL="$(printf "$URL" | sed -E 's,.git$,,' | sed -E 's,^[a-z-]+:([^/]),https://github.com/\1,')"
+URL="$(printf "%s" "$URL"| sed -E 's,.git$,,' | sed -E 's,^[a-z-]+:([^/]),https://github.com/\1,')"
 DOCUMENTATION="$URL/blob/1/README.md"
 SOURCE="$URL/tree/1"
 
