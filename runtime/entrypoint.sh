@@ -38,8 +38,8 @@ config::setup(){
   fi
 }
 
-config:writable /certs
-config:writable /data
+config::writable /certs
+config::writable /data
 config::setup   /config  "$OVERWRITE_CONFIG"
 config::setup   /data    "$OVERWRITE_DATA"
 config::setup   /certs   "$OVERWRITE_CERTS"

@@ -13,7 +13,7 @@ This is particularly useful in two scenarios:
  * based on `debian:buster-slim`
  * no `cap` needed
  * running as a non-root user
- * lightweight (~40MB)
+ * lightweight
 
 ## Run
 
