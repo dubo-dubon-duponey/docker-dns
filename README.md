@@ -9,11 +9,19 @@ This is particularly useful in two scenarios:
 
 ## Image features
 
- * multi-architecture (linux/amd64, linux/arm64, linux/arm/v7, linux/arm/v6)
- * based on `debian:buster-slim`
- * no `cap` needed
- * running as a non-root user
+ * hardened:
+    * runs with no `cap`
+    * running as a non-root user
+    * read-only container
+ * multi-architecture:
+    * linux/amd64
+    * linux/arm64
+    * linux/arm/v7
+    * linux/arm/v6
  * lightweight
+    * based on `debian:buster-slim`
+    * simple entrypoint script
+    * multi-stage build with no installed dependencies for the runtime image
 
 ## Run
 
@@ -31,6 +39,7 @@ docker run -d \
     --env DOMAIN=dns.mydomain.com \
     --env EMAIL=me@mydomain.com \
     --cap-drop ALL \
+    --read-only \
     dubodubonduponey/coredns:v1
 ```
 

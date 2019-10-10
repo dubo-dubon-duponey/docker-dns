@@ -85,11 +85,9 @@ RUN         addgroup --system --gid $BUILD_GID $BUILD_GROUP && \
             mkdir /config && \
             mkdir /data && \
             mkdir /certs && \
-            mkdir /logs && \
             chown $BUILD_UID:root /config && \
             chown $BUILD_UID:root /data && \
             chown $BUILD_UID:root /certs && \
-            chown $BUILD_UID:root /logs && \
             chown -R $BUILD_UID:root . && \
             chmod -R a+r .
 
@@ -106,11 +104,15 @@ ENV         STAGING=""
 ENV         DNS_PORT=1053
 ENV         TLS_PORT=1853
 ENV         HTTPS_PORT=1443
-ENV         UPSTREAM_SERVERS="tls://1.1.1.1 tls://1.0.0.1"
+ENV         UPSTREAM_SERVERS="tls://1.1.1.1"
 ENV         UPSTREAM_NAME="cloudflare-dns.com"
 
 EXPOSE      $DNS_PORT/udp
 EXPOSE      $TLS_PORT
 EXPOSE      $HTTPS_PORT
+
+VOLUME      /config
+VOLUME      /data
+VOLUME      /certs
 
 ENTRYPOINT  ["./entrypoint.sh"]
