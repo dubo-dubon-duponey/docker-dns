@@ -64,9 +64,6 @@ ARG         BUILD_UID=1000
 ARG         BUILD_GROUP=$BUILD_USER
 ARG         BUILD_GID=$BUILD_UID
 
-ARG         CONFIG=/config
-ARG         CERTS=/certs
-
 # Get relevant bits from builder
 COPY        --from=builder /etc/ssl/certs                             /etc/ssl/certs
 COPY        --from=builder /go/src/github.com/coredns/coredns/coredns /bin/coredns
@@ -75,26 +72,36 @@ COPY        --from=builder /go/src/github.com/go-acme/lego/dist/lego  /bin/lego
 # Get relevant local files into cwd
 COPY        runtime .
 
-# Set links
-RUN         mkdir $CONFIG && mkdir $CERTS && \
-            chown $BUILD_UID:$BUILD_GID $CONFIG && chown $BUILD_UID:$BUILD_GID $CERTS && chown -R $BUILD_UID:$BUILD_GID . && \
-            ln -sf /dev/stdout access.log && \
-            ln -sf /dev/stderr error.log
-
-# Create user
+# Create user, set permissions
+# 002 so that both owner (eg: USER) and group (eg: in case we want to run as root) can manipulate the content of these folders
+# This only matters if this is not mounted from the host, using root
 RUN         addgroup --system --gid $BUILD_GID $BUILD_GROUP && \
             adduser --system --disabled-login --no-create-home --home /nonexistent --shell /bin/false \
                 --gecos "in dockerfile user" \
                 --ingroup $BUILD_GROUP \
                 --uid $BUILD_UID \
-                $BUILD_USER
+                $BUILD_USER && \
+            umask 0002 && \
+            mkdir /config && \
+            mkdir /data && \
+            mkdir /certs && \
+            mkdir /logs && \
+            chown $BUILD_UID:root /config && \
+            chown $BUILD_UID:root /data && \
+            chown $BUILD_UID:root /certs && \
+            chown $BUILD_UID:root /logs && \
+            chown -R $BUILD_UID:root . && \
+            chmod -R a+r .
 
 USER        $BUILD_USER
+
+ENV         OVERWRITE_CONFIG=""
+ENV         OVERWRITE_DATA=""
+ENV         OVERWRITE_CERTS=""
 
 ENV         DOMAIN=""
 ENV         EMAIL=""
 ENV         STAGING=""
-ENV         OVERWRITE_CONFIG=""
 
 ENV         DNS_PORT=1053
 ENV         TLS_PORT=1853
@@ -105,8 +112,5 @@ ENV         UPSTREAM_NAME="cloudflare-dns.com"
 EXPOSE      $DNS_PORT/udp
 EXPOSE      $TLS_PORT
 EXPOSE      $HTTPS_PORT
-
-VOLUME      $CONFIG
-VOLUME      $CERTS
 
 ENTRYPOINT  ["./entrypoint.sh"]

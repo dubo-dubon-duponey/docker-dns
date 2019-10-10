@@ -1,30 +1,54 @@
 #!/usr/bin/env bash
 
+# Generic config management
 OVERWRITE_CONFIG=${OVERWRITE_CONFIG:-}
+OVERWRITE_DATA=${OVERWRITE_DATA:-}
+OVERWRITE_CERTS=${OVERWRITE_CERTS:-}
+
+config::writable(){
+  local folder="$1"
+  [ -w "$folder" ] || {
+    >&2 printf "$folder is not writable. Check your mount permissions.\n"
+    exit 1
+  }
+}
+
+config::setup(){
+  local folder="$1"
+  local overwrite="$2"
+  local f
+  local localfolder
+  localfolder="$(basename "$folder")"
+
+  # Clean-up if we are to overwrite
+  [ ! "$overwrite" ] || rm -Rf "${folder:?}"/*
+
+  # If we have a local source
+  if [ -e "$localfolder" ]; then
+    # Copy any file in there over the destination if it doesn't exist
+    for f in "$localfolder"/*; do
+      if [ ! -e "/$f" ]; then
+        >&2 printf "(Over-)writing file /$f.\n"
+        cp -R "$f" "/$f" 2>/dev/null || {
+          >&2 printf "Failed to create file. Permissions issue likely.\n"
+          exit 1
+        }
+      fi
+    done
+  fi
+}
+
+config:writable /certs
+config:writable /data
+config::setup   /config  "$OVERWRITE_CONFIG"
+config::setup   /data    "$OVERWRITE_DATA"
+config::setup   /certs   "$OVERWRITE_CERTS"
 
 # ACME
 DOMAIN="${DOMAIN:-}"
 EMAIL="${EMAIL:-}"
 HTTPS_PORT="${HTTPS_PORT:-}"
 STAGING="${STAGING:-}"
-
-certs::sanity(){
-  [ -w /certs ] || {
-    >&2 printf "/certs is not writable.\n"
-    exit 1
-  }
-}
-
-config::setup(){
-  # If no config, try to have the default one, and fail if this fails
-  if [ ! -e /config/config.conf ] || [ "$OVERWRITE_CONFIG" ]; then
-    [ ! -e /config/config.conf ] || >&2 printf "Overwriting configuration file.\n"
-    cp config/* /config/ 2>/dev/null || {
-      >&2 printf "Failed to create default config file. Permissions issue likely.\n"
-      exit 1
-    }
-  fi
-}
 
 certs::renew(){
   local domain="$1"
@@ -54,9 +78,6 @@ loop(){
   done
 }
 
-certs::sanity
-config::setup
-
 # If we have a domain, get certificates for that
 if [ "$DOMAIN" ]; then
   # Initial registration
@@ -67,4 +88,4 @@ if [ "$DOMAIN" ]; then
 fi
 
 # Get coredns started - the reload plugin will take care of certificates update
-exec coredns -conf /config/config.conf "$@"
+exec coredns -conf /config/coredns.conf "$@"

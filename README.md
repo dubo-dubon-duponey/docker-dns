@@ -38,18 +38,20 @@ docker run -d \
 
 ### Network
 
- * if you intend on running on port 53, you must use `bridge` and publish the port
- * if using `host` or `macvlan`, you will not be able to use a privileged port (but see below)
+ * if you intend on running on port 53, you should use `bridge` and publish the port (see example)
+ * if you need to run with `host` or `macvlan`, you need to `--cap-add CAP_NET_BIND_SERVICE` (and see below for how to specific the ports)
 
 ### Configuration
 
 A default CoreDNS config file will be created in `/config/config.conf` if one does not already exist.
 
-This default file sets-up a forwarder to DNS-over-TLS cloudflare-dns.com.
+This default file sets-up a DNS and DNS-over-TLS server, forwarding to DNS-over-TLS cloudflare-dns.com.
 
 ### Advanced configuration
 
-At runtime, you may tweak the following environment variables:
+#### Runtime
+
+You may tweak the following environment variables:
 
  * UPSTREAM_SERVERS (eg: `tls://1.1.1.1 tls://1.0.0.1`)
  * UPSTREAM_NAME (eg: `cloudflare-dns.com`)
@@ -57,23 +59,25 @@ At runtime, you may tweak the following environment variables:
  * EMAIL (eg: `foo@bar.com`)
  * STAGING (empty by default)
 
-You can also rebuild the image using the following arguments:
-
- * BUILD_UID
- * BUILD_GID
-
 Additionally, OVERWRITE_CONFIG controls whether an existing config file would be overwritten or not (default is not).
 
-You can also tweak the following for control over which internal ports are being used (useful if intend to run with macvlan)
+You can also tweak the following for control over which internal ports are being used (useful if intend to run with host/macvlan)
 
  * DNS_PORT
  * TLS_PORT
  * HTTPS_PORT
 
-Of course using any privileged port for these requires NET_ADMIN.
+Of course using any privileged port for these requires CAP_NET_BIND_SERVICE.
 
 Finally, any additional arguments when running the image will get fed to the `coredns` binary.
 
+#### Build time
+
+You can also rebuild the image using the following arguments:
+
+ * BUILD_UID
+ * BUILD_GID
+
 ## Caveats
 
-* unbound is currently not supported (PR welcome), meaning you have to forward requests to an upstream server
+ * unbound is currently not supported (PR welcome), meaning you have to forward requests to an upstream server
