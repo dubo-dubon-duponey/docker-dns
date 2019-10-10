@@ -31,7 +31,7 @@ This is useful in two scenarios:
 docker run -d \
     --env DOMAIN=something.mydomain.com \
     --env EMAIL=me@mydomain.com \
-    --net=bridge \
+    --net bridge \
     --publish 53:1053/udp \
     --publish 443:1443/tcp \
     --publish 853:1853/tcp \
@@ -56,7 +56,7 @@ docker run -d \
     --volume [host_path_for_config]:/config:ro \
     --env DOMAIN=something.mydomain.com \
     --env EMAIL=me@mydomain.com \
-    --net=bridge \
+    --net bridge \
     --publish 53:1053/udp \
     --publish 443:1443 \
     --publish 853:1853 \
@@ -69,7 +69,7 @@ docker run -d \
 
 If you want to use another networking mode but `bridge` (and run the service on standard ports), you have to run the container as `root`, grant the appropriate `cap` and set the ports:
 
-```
+```bash
 docker run -d \
     --env DOMAIN=something.mydomain.com \
     --env EMAIL=me@mydomain.com \
@@ -77,8 +77,8 @@ docker run -d \
     --env DNS_PORT=53 \
     --env TLS_PORT=853 \
     --env HTTPS_PORT=443 \
-    --cap-add=CAP_NET_BIND_SERVICE \
-    --user=root \
+    --cap-add CAP_NET_BIND_SERVICE \
+    --user root \
     --cap-drop ALL \
     --read-only \
     dubodubonduponey/coredns:v1

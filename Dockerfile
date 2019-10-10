@@ -89,7 +89,7 @@ COPY        --from=builder /etc/ssl/certs                             /etc/ssl/c
 
 # Create a restriced user account (no shell, no home, disabled)
 # Setup directories and permissions
-# The user can access the files as the owner, and root can access as the group (that way, --user=root still works without caps).
+# The user can access the files as the owner, and root can access as the group (that way, --user root still works without caps).
 # Write is granted, although that doesn't really matter in term of security
 RUN         adduser --system --no-create-home --home /nonexistent --gecos "in dockerfile user" \
                 --uid $BUILD_UID \
