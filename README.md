@@ -98,7 +98,7 @@ You may specify the following environment variables at runtime:
  * DOMAIN (eg: `something.mydomain.com`) controls the domain name of your server
  * EMAIL (eg: `me@mydomain.com`) controls the email used to issue your server certificate
  * STAGING (empty by default) controls whether you want to use LetsEncrypt staging environment (useful when debugging so not to burn your quota)
- * UPSTREAM_SERVERS (eg: `tls://1.1.1.1`) controls the upstream forward address
+ * UPSTREAM_SERVER_1 and UPSTREAM_SERVER_2 (eg: `tls://1.1.1.1`) controls the upstream forward addresses
  * UPSTREAM_NAME (eg: `cloudflare-dns.com`) controls the server name of the (TLS) upstream
 
 You can also tweak the following for control over which internal ports are being used (useful if intend to run with host/macvlan, see above)
@@ -108,6 +108,9 @@ You can also tweak the following for control over which internal ports are being
  * TLS_PORT
 
 Of course using any privileged port for these requires CAP_NET_BIND_SERVICE and a root user.
+
+Note that these environment variables are used solely in the default configuration file.
+If you are rolling your own, it's up to you to use them or not.
 
 Finally, any additional arguments provided when running the image will get fed to the `coredns` binary.
 

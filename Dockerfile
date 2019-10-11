@@ -133,7 +133,8 @@ ENV         STAGING=""
 ENV         DNS_PORT=1053
 ENV         TLS_PORT=1853
 ENV         HTTPS_PORT=1443
-ENV         UPSTREAM_SERVERS="tls://1.1.1.1"
+ENV         UPSTREAM_SERVER_1="tls://1.1.1.1"
+ENV         UPSTREAM_SERVER_2="tls://1.0.0.1"
 ENV         UPSTREAM_NAME="cloudflare-dns.com"
 
 # NOTE: this will not be updated at runtime and will always EXPOSE default values
