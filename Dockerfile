@@ -14,7 +14,7 @@ ARG           LEGO_VERSION=776850ffc87bf916d480833d0a996210a8b1d641
 ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 
 # Dependencies necessary for unbound
-RUN           apt-get install -y \
+RUN           apt-get install -y --no-install-recommends \
                 libunbound-dev=1.9.0-2 \
                 nettle-dev=3.4.1-1 \
                 libevent-dev=2.1.8-stable-4 \
@@ -32,8 +32,8 @@ WORKDIR       $GOPATH/src/github.com/coredns/client
 RUN           git clone https://github.com/coredns/client.git .
 RUN           git checkout $COREDNS_CLIENT_VERSION
 
-RUN           arch=${TARGETPLATFORM#*/}; \
-              env GOOS=linux GOARCH=${arch%/*} go build -v -ldflags '-s -w' -o dist/dnsgrpc ./cmd/dnsgrpc
+RUN           arch="${TARGETPLATFORM#*/}"; \
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o dist/dnsgrpc ./cmd/dnsgrpc
 
 # Lego
 # https://github.com/go-acme/lego/blob/master/Makefile
@@ -41,9 +41,9 @@ WORKDIR       $GOPATH/src/github.com/go-acme/lego
 RUN           git clone https://github.com/go-acme/lego.git .
 RUN           git checkout $LEGO_VERSION
 
-RUN           arch=${TARGETPLATFORM#*/}; \
+RUN           arch="${TARGETPLATFORM#*/}"; \
               tag_name=$(git tag -l --contains HEAD); \
-              env GOOS=linux GOARCH=${arch%/*} go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o dist/lego ./cmd/lego
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o dist/lego ./cmd/lego
 
 # CoreDNS v1.6.4
 # https://github.com/coredns/coredns/blob/master/Makefile
@@ -56,20 +56,21 @@ RUN           arch=${TARGETPLATFORM#*/}; \
               if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
                 printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
                 CGO_ENABLED=1; \
+                triplet="$(uname -m)"-linux-gnu; \
                 go generate coredns.go; \
-                mkdir -p /dist/usr/lib/$(uname -m)-linux-gnu; \
-                cp /usr/lib/$(uname -m)-linux-gnu/libunbound.so.8   /dist/usr/lib/$(uname -m)-linux-gnu; \
-                cp /usr/lib/$(uname -m)-linux-gnu/libpthread.so.0   /dist/usr/lib/$(uname -m)-linux-gnu; \
-                cp /usr/lib/$(uname -m)-linux-gnu/libc.so.6         /dist/usr/lib/$(uname -m)-linux-gnu; \
-                cp /usr/lib/$(uname -m)-linux-gnu/libevent-2.1.so.6 /dist/usr/lib/$(uname -m)-linux-gnu; \
+                mkdir -p /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libunbound.so.8   /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libpthread.so.0   /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libc.so.6         /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libevent-2.1.so.6 /dist/usr/lib/"$triplet"; \
               fi; \
-              env GOOS=linux GOARCH=${arch%/*} CGO_ENABLED=$CGO_ENABLED go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$commit" -o dist/coredns
+              env GOOS=linux GOARCH="${arch%/*}" CGO_ENABLED=$CGO_ENABLED go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$commit" -o dist/coredns
 
 WORKDIR       /dist/bin
-RUN           cp $GOPATH/src/github.com/coredns/coredns/dist/coredns  .
-RUN           cp $GOPATH/src/github.com/go-acme/lego/dist/lego        .
-RUN           cp $GOPATH/src/github.com/coredns/client/dist/dnsgrpc   .
-RUN           chmod 555 *
+RUN           cp "$GOPATH"/src/github.com/coredns/coredns/dist/coredns  .
+RUN           cp "$GOPATH"/src/github.com/go-acme/lego/dist/lego        .
+RUN           cp "$GOPATH"/src/github.com/coredns/client/dist/dnsgrpc   .
+RUN           chmod 555 ./*
 
 #######################
 # Running image
