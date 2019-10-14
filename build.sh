@@ -33,23 +33,25 @@ URL="$(printf "%s" "$URL"| sed -E 's,.git$,,' | sed -E 's,^[a-z-]+:([^/]),https:
 DOCUMENTATION="$URL/blob/1/README.md"
 SOURCE="$URL/tree/1"
 
-# Docker settings
-export DOCKER_CONTENT_TRUST=1
-export DOCKER_CLI_EXPERIMENTAL=enabled
+docker::version_check(){
+  dv="$(docker version | grep "^ Version")"
+  dv="${dv#*:}"
+  dv="${dv##* }"
+  if [ "${dv%%.*}" -lt "19" ]; then
+    >&2 printf "Docker is too old and doesn't support buildx. Failing!\n"
+    return 1
+  fi
+}
 
-dv="$(docker version | grep "^ Version")"
-dv="${dv#*:}"
-dv="${dv##* }"
-if [ "${dv%%.*}" -lt "19" ]; then
-  >&2 printf "Docker is too old and doesn't support buildx. Failing!\n"
-  exit 1
-fi
+build::setup(){
+  docker buildx create --node "dubo-dubon-duponey-building-0" --name "dubo-dubon-duponey-building"
+  docker buildx use "dubo-dubon-duponey-building"
+}
 
-# Build invocation
-docker buildx create --node "$VENDOR-${IMAGE_NAME}0" --name "$VENDOR-$IMAGE_NAME"
-docker buildx use "$VENDOR-$IMAGE_NAME"
+docker::version_check || exit 1
+build::setup
 
-docker buildx build --platform "$PLATFORMS" \
+docker buildx build --pull --platform "$PLATFORMS" \
   --build-arg="BUILD_CREATED=$DATE" \
   --build-arg="BUILD_URL=$URL" \
   --build-arg="BUILD_DOCUMENTATION=$DOCUMENTATION" \

@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
 
-# Generic config management
-config::writable(){
-  local folder="$1"
-  [ -w "$folder" ] || {
-    >&2 printf "%s is not writable. Check your mount permissions.\n" "$folder"
-    exit 1
-  }
+# Ensure the certs folder is writable
+[ -w "/certs" ] || {
+  >&2 printf "/certs is not writable. Check your mount permissions.\n"
+  exit 1
 }
 
-# Ensure the certs and data folders are writable
-config::writable /certs
-config::writable /data
-
-# Specifics to the image
 DOMAIN="${DOMAIN:-}"
 EMAIL="${EMAIL:-}"
 HTTPS_PORT="${HTTPS_PORT:-}"
 STAGING="${STAGING:-}"
+UPSTREAM_NAME="${UPSTREAM_NAME:-}"
 
 certs::renew(){
   local domain="$1"
@@ -29,12 +22,12 @@ certs::renew(){
 
   [ -e "/certs/certificates/$domain.key" ] || command="run"
 
-  >&2 printf "Running command: %s" "lego  --domains=\"$domain\" \
+  >&2 printf "Running command: %s" "./bin/lego  --domains=\"$domain\" \
         --accept-tos --email=\"$email\" --path=/certs --tls $staging --pem \
         --tls.port=:${HTTPS_PORT} \
         ${command}"
 
-  lego  --domains="$domain" \
+  ./bin/lego  --domains="$domain" \
         --accept-tos --email="$email" --path=/certs --tls ${staging} --pem \
         --tls.port=:${HTTPS_PORT} \
         ${command}
@@ -47,12 +40,8 @@ loop(){
   done
 }
 
-config=coredns-no-tls.conf
-
 # If we have a domain, get certificates for that, and the appropriate config
 if [ "$DOMAIN" ]; then
-  config=coredns.conf
-
   # Initial registration
   certs::renew "$DOMAIN" "$EMAIL" "$STAGING"
 
@@ -60,5 +49,9 @@ if [ "$DOMAIN" ]; then
   loop "$DOMAIN" "$EMAIL" "$STAGING" &
 fi
 
-# Get coredns started - the reload plugin will take care of certificates update
-exec coredns -conf /config/"$config" "$@"
+# Choose config based on environment values
+[ "$DOMAIN" ]         && no_tls=      || no_tls=-no
+[ "$UPSTREAM_NAME" ]  && mode=forward || mode=recursive
+
+# Get coredns started
+exec ./bin/coredns -conf /config/coredns${no_tls}-tls-${mode}.conf "$@"
