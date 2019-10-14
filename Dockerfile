@@ -75,9 +75,7 @@ RUN           chmod 555 ./*
 #######################
 # Running image
 #######################
-FROM         dubodubonduponey/base:runtime
-
-# libunbound8=1.9.0-2
+FROM        dubodubonduponey/base:runtime
 
 # Get relevant bits from builder
 COPY        --from=builder /dist .
@@ -106,5 +104,5 @@ EXPOSE      $METRICS_PORT/tcp
 # Lego just needs /certs to work
 VOLUME      /certs
 
-HEALTHCHECK --interval=300s --timeout=30s --start-period=10s --retries=1 CMD dnsgrpc dev-null.farcloser.world || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=1 CMD dnsgrpc dev-null.farcloser.world || exit 1
 # CMD dig @127.0.0.1 healthcheck.farcloser.world || exit 1

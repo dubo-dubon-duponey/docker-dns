@@ -33,6 +33,10 @@ URL="$(printf "%s" "$URL"| sed -E 's,.git$,,' | sed -E 's,^[a-z-]+:([^/]),https:
 DOCUMENTATION="$URL/blob/1/README.md"
 SOURCE="$URL/tree/1"
 
+# Docker settings
+export DOCKER_CONTENT_TRUST=1
+export DOCKER_CLI_EXPERIMENTAL=enabled
+
 docker::version_check(){
   dv="$(docker version | grep "^ Version")"
   dv="${dv#*:}"
