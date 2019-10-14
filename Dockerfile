@@ -92,6 +92,7 @@ ENV         DNS_PORT=1053
 ENV         TLS_PORT=1853
 ENV         HTTPS_PORT=1443
 ENV         GRPC_PORT=5553
+ENV         METRICS_PORT=9253
 
 # NOTE: this will not be updated at runtime and will always EXPOSE default values
 # Either way, EXPOSE does not do anything, except function as a documentation helper
@@ -99,6 +100,7 @@ EXPOSE      $DNS_PORT/udp
 EXPOSE      $TLS_PORT/tcp
 EXPOSE      $HTTPS_PORT/tcp
 EXPOSE      $GRPC_PORT/tcp
+EXPOSE      $METRICS_PORT/tcp
 
 # Lego just needs /certs to work
 VOLUME      /certs

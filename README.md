@@ -154,6 +154,7 @@ You can also tweak the following for control over which internal ports are being
  * HTTPS_PORT (default to 1443)
  * TLS_PORT (default to 1853)
  * GRPC_PORT (default to 5553)
+ * METRICS_PORT (default to 9253)
 
 Of course using any privileged port for these requires CAP_NET_BIND_SERVICE and a root user.
 
@@ -170,10 +171,14 @@ You can rebuild the image using the following build arguments:
  
 So to control which user-id to assign to the in-container user.
 
-## Unbound and recursive server
+### Unbound and recursive server
 
 Unbound support requires CGO, which requires the target platform to be the same as the build platform. 
 
 Our images are built on linux/amd64.
 
 If you want to run on arm64, you have to rebuild it yourself on an arm64 node.
+
+### Prometheus
+
+The default configuration files expose a Prometheus metrics endpoint on port 9253.
