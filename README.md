@@ -25,6 +25,10 @@ This is useful in the following scenarios:
     * [✓] based on `debian:buster-slim`
     * [✓] simple entrypoint script
     * [✓] multi-stage build with no installed dependencies for the runtime image
+ * observable
+    * [✓] healthcheck
+    * [✓] prometheus endpoint
+    * [✓] log to stdout
 
 ## Run
 
