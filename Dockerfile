@@ -1,73 +1,110 @@
 ##########################
-# Building image
+# Builder custom
+# Custom steps required to build this specific image
 ##########################
-# XXX golang1.3 broken for now (thanks etcd and https://tip.golang.org/doc/go1.13#version-validation)
-FROM        --platform=$BUILDPLATFORM golang:1.12-buster                                                  AS builder
+FROM          --platform=$BUILDPLATFORM dubodubonduponey/base:builder                                   AS builder
 
-# Install dependencies and tools
-ARG         DEBIAN_FRONTEND="noninteractive"
-ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
-RUN         apt-get update                                                                                > /dev/null
-RUN         apt-get install -y --no-install-recommends \
-                git=1:2.20.1-2 \
-                ca-certificates=20190110                                                                  > /dev/null
-RUN         update-ca-certificates
+# CoreDNS v1.6.4
+ARG           COREDNS_VERSION=b139ba34f370a4937bf76e7cc259a26f1394a91d
+# CoreDNS client
+ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
+# Lego 3.1.0
+ARG           LEGO_VERSION=776850ffc87bf916d480833d0a996210a8b1d641
+# Unbound, 0.0.6
+ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 
-WORKDIR     /build
+# Dependencies necessary for unbound
+RUN           apt-get install -y --no-install-recommends \
+                libunbound-dev=1.9.0-2 \
+                nettle-dev=3.4.1-1 \
+                libevent-dev=2.1.8-stable-4 \
+                > /dev/null
+#                dnsutils=1:9.11.5.P4+dfsg-5.1 \
 
-# v1.6.3
-ARG         COREDNS_VERSION=37b9550d62685d450553437776978518ccca631b
-ARG         TARGETPLATFORM
+# Unbound
+WORKDIR       $GOPATH/src/github.com/coredns/unbound
+RUN           git clone https://github.com/coredns/unbound.git .
+RUN           git checkout $UNBOUND_VERSION
 
-# Checkout logspout upstream, install glide and run it
-WORKDIR     /go/src/github.com/coredns/coredns
+# CoreDNS client
+# https://github.com/coredns/client/blob/master/Makefile
+WORKDIR       $GOPATH/src/github.com/coredns/client
+RUN           git clone https://github.com/coredns/client.git .
+RUN           git checkout $COREDNS_CLIENT_VERSION
 
-RUN         git clone https://github.com/coredns/coredns.git .
-RUN         git checkout $COREDNS_VERSION
-RUN         arch=${TARGETPLATFORM#*/} && \
-            env GOOS=linux GOARCH=${arch%/*} make CHECKS= all
+RUN           arch="${TARGETPLATFORM#*/}"; \
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o dist/dnsgrpc ./cmd/dnsgrpc
+
+# Lego
+# https://github.com/go-acme/lego/blob/master/Makefile
+WORKDIR       $GOPATH/src/github.com/go-acme/lego
+RUN           git clone https://github.com/go-acme/lego.git .
+RUN           git checkout $LEGO_VERSION
+
+RUN           arch="${TARGETPLATFORM#*/}"; \
+              tag_name=$(git tag -l --contains HEAD); \
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o dist/lego ./cmd/lego
+
+# CoreDNS v1.6.4
+# https://github.com/coredns/coredns/blob/master/Makefile
+WORKDIR       $GOPATH/src/github.com/coredns/coredns
+RUN           git clone https://github.com/coredns/coredns.git .
+RUN           git checkout $COREDNS_VERSION
+
+RUN           arch=${TARGETPLATFORM#*/}; \
+              commit=$(git describe --dirty --always); \
+              if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
+                printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
+                CGO_ENABLED=1; \
+                triplet="$(uname -m)"-linux-gnu; \
+                go generate coredns.go; \
+                mkdir -p /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libunbound.so.8   /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libpthread.so.0   /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libc.so.6         /dist/usr/lib/"$triplet"; \
+                cp /usr/lib/"$triplet"/libevent-2.1.so.6 /dist/usr/lib/"$triplet"; \
+              fi; \
+              env GOOS=linux GOARCH="${arch%/*}" CGO_ENABLED=$CGO_ENABLED go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$commit" -o dist/coredns
+
+WORKDIR       /dist/bin
+RUN           cp "$GOPATH"/src/github.com/coredns/coredns/dist/coredns  .
+RUN           cp "$GOPATH"/src/github.com/go-acme/lego/dist/lego        .
+RUN           cp "$GOPATH"/src/github.com/coredns/client/dist/dnsgrpc   .
+RUN           chmod 555 ./*
 
 #######################
 # Running image
 #######################
-FROM        debian:buster-slim
+FROM         dubodubonduponey/base:runtime
 
-LABEL       dockerfile.copyright="Dubo Dubon Duponey <dubo-dubon-duponey@jsboot.space>"
-
-ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
-
-WORKDIR     /dubo-dubon-duponey
+# libunbound8=1.9.0-2
 
 # Get relevant bits from builder
-COPY        --from=builder /etc/ssl/certs /etc/ssl/certs
-COPY        --from=builder /go/src/github.com/coredns/coredns/coredns /bin/coredns
+COPY        --from=builder /dist .
 
-# Get relevant local files
-COPY        entrypoint.sh .
-COPY        config/* .
-
-# Build time variable
-ARG         BUILD_USER=dubo-dubon-duponey
-ARG         BUILD_UID=1042
-ARG         BUILD_GROUP=$BUILD_USER
-ARG         BUILD_GID=$BUILD_UID
-
-# Create user
-RUN         addgroup --system --gid $BUILD_GID $BUILD_GROUP && \
-            adduser --system --disabled-login --no-create-home --home /nonexistent --shell /bin/false \
-                --gecos "in dockerfile user" \
-                --ingroup $BUILD_GROUP \
-                --uid $BUILD_UID \
-                $BUILD_USER
-
-USER        $BUILD_USER
+ENV         DOMAIN=""
+ENV         EMAIL="dubo-dubon-duponey@farcloser.world"
+ENV         UPSTREAM_SERVER_1=""
+ENV         UPSTREAM_SERVER_2=""
+ENV         UPSTREAM_NAME=""
+ENV         STAGING=""
 
 ENV         DNS_PORT=1053
-ENV         TLS_PORT=5553
+ENV         TLS_PORT=1853
+ENV         HTTPS_PORT=1443
+ENV         GRPC_PORT=5553
+ENV         METRICS_PORT=9253
 
+# NOTE: this will not be updated at runtime and will always EXPOSE default values
+# Either way, EXPOSE does not do anything, except function as a documentation helper
 EXPOSE      $DNS_PORT/udp
-EXPOSE      $TLS_PORT
+EXPOSE      $TLS_PORT/tcp
+EXPOSE      $HTTPS_PORT/tcp
+EXPOSE      $GRPC_PORT/tcp
+EXPOSE      $METRICS_PORT/tcp
 
-VOLUME      /config
+# Lego just needs /certs to work
+VOLUME      /certs
 
-ENTRYPOINT  ["./entrypoint.sh"]
+HEALTHCHECK --interval=300s --timeout=30s --start-period=10s --retries=1 CMD dnsgrpc dev-null.farcloser.world || exit 1
+# CMD dig @127.0.0.1 healthcheck.farcloser.world || exit 1
