@@ -67,4 +67,4 @@ docker buildx build --pull --platform "$PLATFORMS" \
   --build-arg="BUILD_REF_NAME=$REGISTRY/$VENDOR/$IMAGE_NAME:$IMAGE_TAG" \
   --build-arg="BUILD_TITLE=$TITLE" \
   --build-arg="BUILD_DESCRIPTION=$DESCRIPTION" \
-  -t "$REGISTRY/$VENDOR/$IMAGE_NAME:$IMAGE_TAG" ${CACHE} ${PUSH} .
+  -t "$REGISTRY/$VENDOR/$IMAGE_NAME:$IMAGE_TAG" ${CACHE} ${PUSH} "$@" .
