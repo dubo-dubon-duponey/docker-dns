@@ -36,6 +36,8 @@ certs::renew(){
 loop(){
   while true; do
     certs::renew "$1" "$2" "$3"
+    # signal coredns to reload config - technically happens once a day, which is not optimal, but fine
+    kill -s SIGUSR1 1
     sleep 86400
   done
 }
