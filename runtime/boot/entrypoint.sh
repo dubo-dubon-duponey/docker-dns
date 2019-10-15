@@ -22,12 +22,12 @@ certs::renew(){
 
   [ -e "/certs/certificates/$domain.key" ] || command="run"
 
-  >&2 printf "Running command: %s" "./bin/lego  --domains=\"$domain\" \
+  >&2 printf "Running command: %s" "lego  --domains=\"$domain\" \
         --accept-tos --email=\"$email\" --path=/certs --tls $staging --pem \
         --tls.port=:${HTTPS_PORT} \
         ${command}"
 
-  ./bin/lego  --domains="$domain" \
+  lego  --domains="$domain" \
         --accept-tos --email="$email" --path=/certs --tls ${staging} --pem \
         --tls.port=:${HTTPS_PORT} \
         ${command}
@@ -54,4 +54,4 @@ fi
 [ "$UPSTREAM_NAME" ]  && mode=forward || mode=recursive
 
 # Get coredns started
-exec ./bin/coredns -conf /config/coredns${no_tls}-tls-${mode}.conf "$@"
+exec coredns -conf /config/coredns${no_tls}-tls-${mode}.conf "$@"
