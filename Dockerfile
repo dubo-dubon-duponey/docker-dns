@@ -15,7 +15,7 @@ ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 
 # Dependencies necessary for unbound
 RUN           apt-get install -y --no-install-recommends \
-                libunbound-dev=1.9.0-2 \
+                libunbound-dev=1.9.0-2+deb10u1 \
                 nettle-dev=3.4.1-1 \
                 libevent-dev=2.1.8-stable-4 \
                 > /dev/null
