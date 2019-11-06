@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # Ensure the certs folder is writable
 [ -w "/certs" ] || {
