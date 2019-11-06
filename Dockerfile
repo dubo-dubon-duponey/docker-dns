@@ -65,7 +65,7 @@ WORKDIR       $GOPATH/src/github.com/coredns/coredns
 RUN           git clone https://github.com/coredns/coredns.git .
 RUN           git checkout $COREDNS_VERSION
 
-RUN           set -Eeu; \
+RUN           set -eu; \
               arch=${TARGETPLATFORM#*/}; \
               commit=$(git describe --dirty --always); \
               CGO_ENABLED=${CGO_ENABLED:-0}; \
