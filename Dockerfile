@@ -9,9 +9,7 @@ WORKDIR       $GOPATH/src/github.com/dubo-dubon-duponey/healthcheckers
 RUN           git clone git://github.com/dubo-dubon-duponey/healthcheckers .
 RUN           git checkout $HEALTH_VER
 RUN           arch="${TARGETPLATFORM#*/}"; \
-              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o /dist/bin/dns-health ./cmd/dns
-
-RUN           chmod 555 /dist/bin/*
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o /dist/boot/bin/dns-health ./cmd/dns
 
 ##########################
 # Builder custom
@@ -57,7 +55,7 @@ RUN           git checkout $LEGO_VERSION
 
 RUN           arch="${TARGETPLATFORM#*/}"; \
               tag_name=$(git tag -l --contains HEAD); \
-              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o /dist/bin/lego ./cmd/lego
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o /dist/boot/bin/lego ./cmd/lego
 
 # CoreDNS v1.6.4
 # https://github.com/coredns/coredns/blob/master/Makefile
@@ -72,17 +70,19 @@ RUN           set -eu; \
               if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
                 printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
                 CGO_ENABLED=1; \
-                triplet="$(uname -m)"-linux-gnu; \
+                triplet="$(gcc -dumpmachine)"; \
                 go generate coredns.go; \
-                mkdir -p /dist/usr/lib/"$triplet"; \
-                cp /usr/lib/"$triplet"/libunbound.so.8    /dist/usr/lib/"$triplet"; \
-                cp /lib/"$triplet"/libpthread.so.0        /dist/usr/lib/"$triplet"; \
-                cp /lib/"$triplet"/libc.so.6              /dist/usr/lib/"$triplet"; \
-                cp /usr/lib/"$triplet"/libevent-2.1.so.6  /dist/usr/lib/"$triplet"; \
+                mkdir -p /dist/lib; \
+                cp /usr/lib/"$triplet"/libunbound.so.8    /dist/boot/lib; \
+                cp /lib/"$triplet"/libpthread.so.0        /dist/boot/lib; \
+                cp /lib/"$triplet"/libc.so.6              /dist/boot/lib; \
+                cp /usr/lib/"$triplet"/libevent-2.1.so.6  /dist/boot/lib; \
               fi; \
-              env GOOS=linux GOARCH="${arch%/*}" CGO_ENABLED=$CGO_ENABLED go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$commit" -o /dist/bin/coredns
+              env GOOS=linux GOARCH="${arch%/*}" CGO_ENABLED=$CGO_ENABLED go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$commit" -o /dist/boot/bin/coredns
 
-RUN           chmod 555 /dist/bin/*
+COPY          --from=builder-healthcheck /dist/boot/bin           /dist/boot/bin
+
+RUN           chmod 555 /dist/boot/bin/*
 
 #######################
 # Running image
@@ -90,8 +90,7 @@ RUN           chmod 555 /dist/bin/*
 FROM          dubodubonduponey/base:runtime
 
 # Get relevant bits from builder
-COPY          --from=builder /dist .
-COPY          --from=builder-healthcheck /dist .
+COPY          --from=builder --chown=$BUILD_UID:root /dist .
 
 ENV           DOMAIN=""
 ENV           EMAIL="dubo-dubon-duponey@farcloser.world"

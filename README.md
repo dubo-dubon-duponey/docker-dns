@@ -13,22 +13,22 @@ This is useful in the following scenarios:
 ## Image features
 
  * multi-architecture:
-    * [✓] linux/amd64
-    * [✓] linux/arm64
-    * [✓] linux/arm/v7
-    * [✓] linux/arm/v6
+    * [x] linux/amd64
+    * [x] linux/arm64
+    * [x] linux/arm/v7
+    * [x] linux/arm/v6
  * hardened:
-    * [✓] image runs read-only
-    * [✓] image runs with no capabilities
-    * [✓] process runs as a non-root user, disabled login, no shell
+    * [x] image runs read-only
+    * [x] image runs with no capabilities
+    * [x] process runs as a non-root user, disabled login, no shell
  * lightweight
-    * [✓] based on `debian:buster-slim`
-    * [✓] simple entrypoint script
-    * [✓] multi-stage build with no installed dependencies for the runtime image
+    * [x] based on `debian:buster-slim`
+    * [x] simple entrypoint script
+    * [x] multi-stage build with no installed dependencies for the runtime image
  * observable
-    * [✓] healthcheck
-    * [✓] prometheus endpoint
-    * [✓] log to stdout
+    * [x] healthcheck
+    * [x] prometheus endpoint
+    * [x] log to stdout
 
 ## Run
 
