@@ -72,7 +72,7 @@ RUN           set -eu; \
                 CGO_ENABLED=1; \
                 triplet="$(gcc -dumpmachine)"; \
                 go generate coredns.go; \
-                mkdir -p /dist/lib; \
+                mkdir -p /dist/boot/lib; \
                 cp /usr/lib/"$triplet"/libunbound.so.8    /dist/boot/lib; \
                 cp /lib/"$triplet"/libpthread.so.0        /dist/boot/lib; \
                 cp /lib/"$triplet"/libc.so.6              /dist/boot/lib; \
