@@ -117,7 +117,7 @@ EXPOSE        $METRICS_PORT/tcp
 VOLUME        /certs
 
 ENV           HEALTHCHECK_URL="127.0.0.1:$DNS_PORT"
-ENV           HEALTHCHECK_QUESTION=dev.farcloser.world
+ENV           HEALTHCHECK_QUESTION=healthcheck-dns.farcloser.world
 ENV           HEALTHCHECK_TYPE=udp
 
 #HEALTHCHECK   --interval=30s --timeout=30s --start-period=10s --retries=1 CMD dnsgrpc dev-null.farcloser.world || exit 1
