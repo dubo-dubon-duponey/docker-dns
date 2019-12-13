@@ -53,6 +53,7 @@ WORKDIR       $GOPATH/src/github.com/go-acme/lego
 RUN           git clone https://github.com/go-acme/lego.git .
 RUN           git checkout $LEGO_VERSION
 
+# hadolint ignore=DL4006
 RUN           arch="${TARGETPLATFORM#*/}"; \
               tag_name=$(git tag -l --contains HEAD | head -n 1); \
               env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o /dist/boot/bin/lego ./cmd/lego
