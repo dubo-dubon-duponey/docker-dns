@@ -21,8 +21,8 @@ FROM          --platform=$BUILDPLATFORM dubodubonduponey/base:builder           
 ARG           COREDNS_VERSION=b139ba34f370a4937bf76e7cc259a26f1394a91d
 # CoreDNS client
 ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
-# Lego 3.1.0
-ARG           LEGO_VERSION=776850ffc87bf916d480833d0a996210a8b1d641
+# Lego 3.2.0
+ARG           LEGO_VERSION=11ee928ace97cc5f274df13da015f5f84ae3756d
 # Unbound, 0.0.6
 ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 
@@ -54,7 +54,7 @@ RUN           git clone https://github.com/go-acme/lego.git .
 RUN           git checkout $LEGO_VERSION
 
 RUN           arch="${TARGETPLATFORM#*/}"; \
-              tag_name=$(git tag -l --contains HEAD); \
+              tag_name=$(git tag -l --contains HEAD | head -n 1); \
               env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o /dist/boot/bin/lego ./cmd/lego
 
 # CoreDNS v1.6.4
