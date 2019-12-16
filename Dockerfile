@@ -3,6 +3,7 @@
 #######################
 ARG           BUILDER_BASE=dubodubonduponey/base:builder
 ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
+# hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
 ARG           HEALTH_VER=51ebf8ca3d255e0c846307bf72740f731e6210c3
@@ -17,6 +18,7 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
 # Builder custom
 # Custom steps required to build this specific image
 ##########################
+# hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder
 
 # CoreDNS v1.6.4
@@ -90,6 +92,7 @@ RUN           chmod 555 /dist/boot/bin/*
 #######################
 # Running image
 #######################
+# hadolint ignore=DL3006
 FROM          $RUNTIME_BASE
 
 # Get relevant bits from builder
