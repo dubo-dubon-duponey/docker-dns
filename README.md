@@ -2,7 +2,7 @@
 
 Docker image for CoreDNS, with sample configuration for various "DNS over TLS" scenarios.
 
-This is based on [CoreDNS](https://coredns.io/), and [Let's Encrypt](https://letsencrypt.org/) via [Lego](https://github.com/go-acme/lego)).
+This is based on [CoreDNS](https://coredns.io/), and [Let's Encrypt](https://letsencrypt.org/) (via [Lego](https://github.com/go-acme/lego)).
 
 This is useful in the following scenarios:
 
@@ -22,7 +22,7 @@ This is useful in the following scenarios:
     * [x] image runs with no capabilities
     * [x] process runs as a non-root user, disabled login, no shell
  * lightweight
-    * [x] based on `debian:buster-slim`
+    * [x] based on our slim [Debian buster version](https://github.com/dubo-dubon-duponey/docker-debian)
     * [x] simple entrypoint script
     * [x] multi-stage build with no installed dependencies for the runtime image
  * observable
@@ -33,11 +33,15 @@ This is useful in the following scenarios:
 ## Run
 
 You can run either a forwarding server (that will send requests to an upstream), or a recursive one 
-(only available on AMD64 - or ARM64 if you rebuild the image on an ARM64 node).
+(only available on AMD64 in the provided image - or ARM64 if you rebuild the image on an ARM64 node).
 
 Then you can either expose a traditional DNS server, a TLS server, or both.
 
-Examples: traditional DNS server, forwarding requests to a TLS upstream (encrypted). Cloudflare in this example:
+Examples:
+
+### Traditional DNS server, forwarding
+
+... to a TLS upstream (encrypted). Cloudflare in this example:
 
 ```bash
 docker run -d \
@@ -51,7 +55,9 @@ docker run -d \
     dubodubonduponey/coredns:v1
 ```
 
-TLS server, forwarding to a TLS upstream
+### TLS server, forwarding
+
+... same as above
 
 ```bash
 docker run -d \
@@ -68,7 +74,7 @@ docker run -d \
     dubodubonduponey/coredns:v1
 ```
 
-Traditional DNS server, recursive.
+### Traditional DNS server, recursive
 
 ```bash
 docker run -d \
@@ -79,7 +85,7 @@ docker run -d \
     dubodubonduponey/coredns:v1
 ```
 
-TLS server, recursive.
+### TLS server, recursive
 
 ```bash
 docker run -d \
