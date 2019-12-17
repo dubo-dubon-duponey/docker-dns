@@ -27,8 +27,8 @@ This is useful in the following scenarios:
     * [x] multi-stage build with no installed dependencies for the runtime image
  * observable
     * [x] healthcheck
-    * [x] prometheus endpoint
     * [x] log to stdout
+    * [x] prometheus endpoint
 
 ## Run
 
@@ -173,14 +173,6 @@ If you are rolling your own, it's up to you to use them or not.
 
 Finally, any additional arguments provided when running the image will get fed to the `coredns` binary.
 
-#### Build time
-
-You can rebuild the image using the following build arguments:
-
- * BUILD_UID
- 
-So to control which user-id to assign to the in-container user.
-
 ### Unbound and recursive server
 
 Unbound support requires CGO, which requires the target platform to be the same as the build platform. 
@@ -192,3 +184,7 @@ If you want to run on arm64, you have to rebuild it yourself on an arm64 node.
 ### Prometheus
 
 The default configuration files expose a Prometheus metrics endpoint on port 9253.
+
+## Moar?
+
+See [DEVELOP.md](DEVELOP.md)
