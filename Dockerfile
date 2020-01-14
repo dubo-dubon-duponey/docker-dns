@@ -21,12 +21,12 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
 # hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder
 
-# CoreDNS v1.6.4
-ARG           COREDNS_VERSION=b139ba34f370a4937bf76e7cc259a26f1394a91d
+# CoreDNS v1.6.6
+ARG           COREDNS_VERSION=c95e7f233ae5f68b949aff4c08e984ff3db7094e
 # CoreDNS client
-ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
-# Lego 3.2.0
-ARG           LEGO_VERSION=11ee928ace97cc5f274df13da015f5f84ae3756d
+# ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
+# Lego 3.3.0
+ARG           LEGO_VERSION=63758264cb8537f498820cc36ad3bcaf201a5a5f
 # Unbound, 0.0.6
 ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 
