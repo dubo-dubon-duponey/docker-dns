@@ -6,40 +6,50 @@ ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
 # hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
-ARG           HEALTH_VER=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
+ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
 
-WORKDIR       $GOPATH/src/github.com/dubo-dubon-duponey/healthcheckers
-RUN           git clone git://github.com/dubo-dubon-duponey/healthcheckers .
-RUN           git checkout $HEALTH_VER
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone git://$GIT_REPO .
+RUN           git checkout $GIT_VERSION
 RUN           arch="${TARGETPLATFORM#*/}"; \
-              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o /dist/boot/bin/dns-health ./cmd/dns
+              env GOOS=linux GOARCH="${arch%/*}" go build -mod=vendor -v -ldflags "-s -w" -o /dist/boot/bin/dns-health ./cmd/dns
 
 ##########################
 # Builder custom
-# Custom steps required to build this specific image
 ##########################
 # hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder
 
 # CoreDNS v1.6.6
-ARG           COREDNS_VERSION=c95e7f233ae5f68b949aff4c08e984ff3db7094e
+ARG           GIT_REPO=github.com/coredns/coredns
+ARG           GIT_VERSION=c95e7f233ae5f68b949aff4c08e984ff3db7094e
 # CoreDNS client
 # ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
 # Lego 3.3.0
+ARG           LEGO_REPO=github.com/go-acme/lego
 ARG           LEGO_VERSION=63758264cb8537f498820cc36ad3bcaf201a5a5f
 # Unbound, 0.0.6
+ARG           UNBOUND_REPO=github.com/coredns/unbound
 ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 
+
 # Dependencies necessary for unbound
-RUN           apt-get install -qq --no-install-recommends \
+RUN           apt-get update -qq && \
+              apt-get install -qq --no-install-recommends \
                 libunbound-dev=1.9.0-2+deb10u1 \
                 nettle-dev=3.4.1-1 \
-                libevent-dev=2.1.8-stable-4
+                libevent-dev=2.1.8-stable-4 && \
+              apt-get -qq autoremove      && \
+              apt-get -qq clean           && \
+              rm -rf /var/lib/apt/lists/* && \
+              rm -rf /tmp/*               && \
+              rm -rf /var/tmp/*
 #                dnsutils=1:9.11.5.P4+dfsg-5.1 \
 
 # Unbound
-WORKDIR       $GOPATH/src/github.com/coredns/unbound
-RUN           git clone https://github.com/coredns/unbound.git .
+WORKDIR       $GOPATH/src/$UNBOUND_REPO
+RUN           git clone git://$UNBOUND_REPO .
 RUN           git checkout $UNBOUND_VERSION
 
 # CoreDNS client
@@ -53,8 +63,8 @@ RUN           git checkout $UNBOUND_VERSION
 
 # Lego
 # https://github.com/go-acme/lego/blob/master/Makefile
-WORKDIR       $GOPATH/src/github.com/go-acme/lego
-RUN           git clone https://github.com/go-acme/lego.git .
+WORKDIR       $GOPATH/src/$LEGO_REPO
+RUN           git clone git://$LEGO_REPO .
 RUN           git checkout $LEGO_VERSION
 
 # hadolint ignore=DL4006
@@ -62,12 +72,10 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
               tag_name=$(git tag -l --contains HEAD | head -n 1); \
               env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o /dist/boot/bin/lego ./cmd/lego
 
-# CoreDNS v1.6.4
 # https://github.com/coredns/coredns/blob/master/Makefile
-WORKDIR       $GOPATH/src/github.com/coredns/coredns
-RUN           git clone https://github.com/coredns/coredns.git .
-RUN           git checkout $COREDNS_VERSION
-
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone git://$GIT_REPO .
+RUN           git checkout $GIT_VERSION
 RUN           set -eu; \
               arch=${TARGETPLATFORM#*/}; \
               commit=$(git describe --dirty --always); \
@@ -85,8 +93,7 @@ RUN           set -eu; \
               fi; \
               env GOOS=linux GOARCH="${arch%/*}" CGO_ENABLED=$CGO_ENABLED go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$commit" -o /dist/boot/bin/coredns
 
-COPY          --from=builder-healthcheck /dist/boot/bin           /dist/boot/bin
-
+COPY          --from=builder-healthcheck /dist/boot/bin /dist/boot/bin
 RUN           chmod 555 /dist/boot/bin/*
 
 #######################
