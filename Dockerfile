@@ -21,14 +21,14 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
 # hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder
 
-# CoreDNS v1.6.6
+# CoreDNS v1.6.9
 ARG           GIT_REPO=github.com/coredns/coredns
-ARG           GIT_VERSION=c95e7f233ae5f68b949aff4c08e984ff3db7094e
+ARG           GIT_VERSION=1766568398e3120c85d44f5c6237a724248b652e
 # CoreDNS client
 # ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
-# Lego 3.3.0
+# Lego 3.7.0
 ARG           LEGO_REPO=github.com/go-acme/lego
-ARG           LEGO_VERSION=63758264cb8537f498820cc36ad3bcaf201a5a5f
+ARG           LEGO_VERSION=e774e180a51b11a3ba9f3c1784b1cbc7dce1322b
 # Unbound, 0.0.6
 ARG           UNBOUND_REPO=github.com/coredns/unbound
 ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
@@ -37,7 +37,7 @@ ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 # Dependencies necessary for unbound
 RUN           apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
-                libunbound-dev=1.9.0-2+deb10u1 \
+                libunbound-dev=1.9.0-2+deb10u2 \
                 nettle-dev=3.4.1-1 \
                 libevent-dev=2.1.8-stable-4 && \
               apt-get -qq autoremove      && \
@@ -133,5 +133,4 @@ ENV           HEALTHCHECK_URL="127.0.0.1:$DNS_PORT"
 ENV           HEALTHCHECK_QUESTION=healthcheck-dns.farcloser.world
 ENV           HEALTHCHECK_TYPE=udp
 
-#HEALTHCHECK   --interval=30s --timeout=30s --start-period=10s --retries=1 CMD dnsgrpc dev-null.farcloser.world || exit 1
-HEALTHCHECK   --interval=30s --timeout=30s --start-period=10s --retries=1 CMD dns-health || exit 1
+HEALTHCHECK   --interval=120s --timeout=30s --start-period=10s --retries=1 CMD dns-health || exit 1
