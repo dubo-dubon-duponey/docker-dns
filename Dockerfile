@@ -13,7 +13,8 @@ WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
 RUN           arch="${TARGETPLATFORM#*/}"; \
-              env GOOS=linux GOARCH="${arch%/*}" go build -mod=vendor -v -ldflags "-s -w" -o /dist/boot/bin/dns-health ./cmd/dns
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" \
+                -o /dist/boot/bin/dns-health ./cmd/dns
 
 ##########################
 # Builder custom
@@ -78,8 +79,7 @@ RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
 RUN           set -eu; \
               arch=${TARGETPLATFORM#*/}; \
-              commit=$(git describe --dirty --always); \
-              CGO_ENABLED=${CGO_ENABLED:-0}; \
+              commit="$(git describe --dirty --always)"; \
               if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
                 printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
                 CGO_ENABLED=1; \
