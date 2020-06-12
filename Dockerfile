@@ -1,8 +1,9 @@
+ARG           BUILDER_BASE=dubodubonduponey/base:builder
+ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
+
 #######################
 # Extra builder for healthchecker
 #######################
-ARG           BUILDER_BASE=dubodubonduponey/base:builder
-ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
 # hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
