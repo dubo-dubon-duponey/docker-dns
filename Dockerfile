@@ -34,7 +34,6 @@ ARG           LEGO_VERSION=e774e180a51b11a3ba9f3c1784b1cbc7dce1322b
 ARG           UNBOUND_REPO=github.com/coredns/unbound
 ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 
-
 # Dependencies necessary for unbound
 RUN           apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
