@@ -16,7 +16,7 @@ This is useful in the following scenarios:
     * [x] linux/amd64
     * [x] linux/arm64
     * [x] linux/arm/v7
-    * [x] linux/arm/v6
+    * [ ] linux/arm/v6 (should build, disabled by default)
  * hardened:
     * [x] image runs read-only
     * [x] image runs with no capabilities
@@ -52,7 +52,7 @@ docker run -d \
     --publish 53:1053/udp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns:v1
+    dubodubonduponey/coredns
 ```
 
 ### TLS server, forwarding
@@ -71,7 +71,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns:v1
+    dubodubonduponey/coredns
 ```
 
 ### Traditional DNS server, recursive
@@ -82,7 +82,7 @@ docker run -d \
     --publish 53:1053/udp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns:v1
+    dubodubonduponey/coredns
 ```
 
 ### TLS server, recursive
@@ -96,7 +96,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns:v1
+    dubodubonduponey/coredns
 ```
 
 For TLS, you do need to expose port 443 publicly from your docker host so that LetsEncrypt can issue your certificate,
@@ -120,7 +120,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns:v1
+    dubodubonduponey/coredns
 ```
 
 ### Networking
@@ -139,7 +139,7 @@ docker run -d \
     --user root \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns:v1
+    dubodubonduponey/coredns
 ```
 
 ### Configuration reference
