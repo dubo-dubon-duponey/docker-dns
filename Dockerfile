@@ -85,7 +85,7 @@ RUN           git checkout $GIT_VERSION
 RUN           set -eu; \
               if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
                 printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
-                CGO_ENABLED=1; \
+                export CGO_ENABLED=1; \
                 triplet="$(gcc -dumpmachine)"; \
                 go generate coredns.go; \
                 mkdir -p /dist/boot/lib; \
