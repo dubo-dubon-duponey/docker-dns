@@ -27,17 +27,25 @@ ARG           GIT_REPO=github.com/coredns/coredns
 # CoreDNS v1.6.9
 #ARG           GIT_VERSION=1766568398e3120c85d44f5c6237a724248b652e
 # CoreDNS v1.7.0
-ARG           GIT_VERSION=f59c03d09c3a3a12f571ad1087b979325f3dae30
+#ARG           GIT_VERSION=f59c03d09c3a3a12f571ad1087b979325f3dae30
+# CoreDNS v1.8.0
+ARG           GIT_VERSION=054c9ae1fbea39d586652664fbc9a5cedbd97618
 # CoreDNS client
 # ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
+
 ARG           LEGO_REPO=github.com/go-acme/lego
 # Lego 3.7.0
 #ARG           LEGO_VERSION=e774e180a51b11a3ba9f3c1784b1cbc7dce1322b
 # Lego 3.8.0
-ARG           LEGO_VERSION=bcb5be49c87bab63f9bab23823fd79c7f3d4390a
-# Unbound, 0.0.6
+#ARG           LEGO_VERSION=bcb5be49c87bab63f9bab23823fd79c7f3d4390a
+# Lego 4.1.0
+ARG           LEGO_VERSION=dd4f73dd6a9fc0a4764b8bd639ad1834ad9bde7b
+
 ARG           UNBOUND_REPO=github.com/coredns/unbound
-ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
+# Unbound, 0.0.6
+#ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
+# Unbound, 0.0.7
+ARG           UNBOUND_VERSION=23331a6762795107b6d525a4d73ad3854003f9f7
 
 # Dependencies necessary for unbound
 RUN           apt-get update -qq && \
