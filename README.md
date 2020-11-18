@@ -39,7 +39,7 @@ Then you can either expose a traditional DNS server, a TLS server, or both.
 
 Examples:
 
-### Traditional DNS server, forwarding
+### Traditional DNS server, forwarding
 
 ... to a TLS upstream (encrypted). Cloudflare in this example:
 
@@ -181,7 +181,7 @@ Our images are built on linux/amd64.
 
 If you want to run on arm64, you have to rebuild it yourself on an arm64 node.
 
-### Prometheus
+### Prometheus
 
 The default configuration files expose a Prometheus metrics endpoint on port 9253.
 

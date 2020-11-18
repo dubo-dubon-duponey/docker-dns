@@ -4,7 +4,7 @@ ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
 #######################
 # Extra builder for healthchecker
 #######################
-# hadolint ignore=DL3006
+# hadolint ignore=DL3006,DL3029
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
@@ -13,27 +13,39 @@ ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
 WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
-RUN           arch="${TARGETPLATFORM#*/}"; \
-              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" \
+# hadolint ignore=DL4006
+RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w" \
                 -o /dist/boot/bin/dns-health ./cmd/dns
 
 ##########################
 # Builder custom
 ##########################
-# hadolint ignore=DL3006
+# hadolint ignore=DL3006,DL3029
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder
 
-# CoreDNS v1.6.9
 ARG           GIT_REPO=github.com/coredns/coredns
-ARG           GIT_VERSION=1766568398e3120c85d44f5c6237a724248b652e
+# CoreDNS v1.6.9
+#ARG           GIT_VERSION=1766568398e3120c85d44f5c6237a724248b652e
+# CoreDNS v1.7.0
+#ARG           GIT_VERSION=f59c03d09c3a3a12f571ad1087b979325f3dae30
+# CoreDNS v1.8.0
+ARG           GIT_VERSION=054c9ae1fbea39d586652664fbc9a5cedbd97618
 # CoreDNS client
 # ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
-# Lego 3.7.0
+
 ARG           LEGO_REPO=github.com/go-acme/lego
-ARG           LEGO_VERSION=e774e180a51b11a3ba9f3c1784b1cbc7dce1322b
-# Unbound, 0.0.6
+# Lego 3.7.0
+#ARG           LEGO_VERSION=e774e180a51b11a3ba9f3c1784b1cbc7dce1322b
+# Lego 3.8.0
+#ARG           LEGO_VERSION=bcb5be49c87bab63f9bab23823fd79c7f3d4390a
+# Lego 4.1.0
+ARG           LEGO_VERSION=dd4f73dd6a9fc0a4764b8bd639ad1834ad9bde7b
+
 ARG           UNBOUND_REPO=github.com/coredns/unbound
-ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
+# Unbound, 0.0.6
+#ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
+# Unbound, 0.0.7
+ARG           UNBOUND_VERSION=23331a6762795107b6d525a4d73ad3854003f9f7
 
 # Dependencies necessary for unbound
 RUN           apt-get update -qq && \
@@ -59,8 +71,9 @@ RUN           git checkout $UNBOUND_VERSION
 #RUN           git clone https://github.com/coredns/client.git .
 #RUN           git checkout $COREDNS_CLIENT_VERSION
 
-#RUN           arch="${TARGETPLATFORM#*/}"; \
-#              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o dist/dnsgrpc ./cmd/dnsgrpc
+# hadolint ignore=DL4006
+#RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w" \
+#               -o dist/dnsgrpc ./cmd/dnsgrpc
 
 # Lego
 # https://github.com/go-acme/lego/blob/master/Makefile
@@ -69,20 +82,18 @@ RUN           git clone git://$LEGO_REPO .
 RUN           git checkout $LEGO_VERSION
 
 # hadolint ignore=DL4006
-RUN           arch="${TARGETPLATFORM#*/}"; \
-              tag_name=$(git tag -l --contains HEAD | head -n 1); \
-              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w -X main.version=${tag_name:-$(git rev-parse HEAD)}" -o /dist/boot/bin/lego ./cmd/lego
+RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w -X main.version=$BUILD_VERSION" \
+                -o /dist/boot/bin/lego ./cmd/lego
 
 # https://github.com/coredns/coredns/blob/master/Makefile
 WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
+# hadolint ignore=DL4006
 RUN           set -eu; \
-              arch=${TARGETPLATFORM#*/}; \
-              commit="$(git describe --dirty --always)"; \
               if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
                 printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
-                CGO_ENABLED=1; \
+                export CGO_ENABLED=1; \
                 triplet="$(gcc -dumpmachine)"; \
                 go generate coredns.go; \
                 mkdir -p /dist/boot/lib; \
@@ -91,7 +102,8 @@ RUN           set -eu; \
                 cp /lib/"$triplet"/libc.so.6              /dist/boot/lib; \
                 cp /usr/lib/"$triplet"/libevent-2.1.so.6  /dist/boot/lib; \
               fi; \
-              env GOOS=linux GOARCH="${arch%/*}" CGO_ENABLED=$CGO_ENABLED go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$commit" -o /dist/boot/bin/coredns
+              env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$BUILD_REVISION" \
+                -o /dist/boot/bin/coredns
 
 COPY          --from=builder-healthcheck /dist/boot/bin /dist/boot/bin
 RUN           chmod 555 /dist/boot/bin/*
