@@ -9,45 +9,42 @@ FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                           
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
 ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           BUILD_TARGET=./cmd/dns
+ARG           BUILD_OUTPUT=dns-health
+ARG           BUILD_FLAGS="-s -w"
 
 WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
 # hadolint ignore=DL4006
-RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w" \
-                -o /dist/boot/bin/dns-health ./cmd/dns
+RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v \
+                -ldflags "$BUILD_FLAGS" -o /dist/boot/bin/"$BUILD_OUTPUT" "$BUILD_TARGET"
 
 ##########################
 # Builder custom
 ##########################
 # hadolint ignore=DL3006,DL3029
-FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder
+FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-coredns
 
 ARG           GIT_REPO=github.com/coredns/coredns
-# CoreDNS v1.6.9
-#ARG           GIT_VERSION=1766568398e3120c85d44f5c6237a724248b652e
-# CoreDNS v1.7.0
-#ARG           GIT_VERSION=f59c03d09c3a3a12f571ad1087b979325f3dae30
-# CoreDNS v1.8.0
-ARG           GIT_VERSION=054c9ae1fbea39d586652664fbc9a5cedbd97618
+# CoreDNS v1.8.1
+ARG           GIT_VERSION=95622f4c9ae65de9465b5fb022711e95be4df2ce
 # CoreDNS client
 # ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
 
 ARG           LEGO_REPO=github.com/go-acme/lego
-# Lego 3.7.0
-#ARG           LEGO_VERSION=e774e180a51b11a3ba9f3c1784b1cbc7dce1322b
-# Lego 3.8.0
-#ARG           LEGO_VERSION=bcb5be49c87bab63f9bab23823fd79c7f3d4390a
-# Lego 4.1.0
-ARG           LEGO_VERSION=dd4f73dd6a9fc0a4764b8bd639ad1834ad9bde7b
+# Lego 4.2.0
+ARG           LEGO_VERSION=52e6721dca65e1618067db242a61baf523140b71
 
 ARG           UNBOUND_REPO=github.com/coredns/unbound
-# Unbound, 0.0.6
-#ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
 # Unbound, 0.0.7
 ARG           UNBOUND_VERSION=23331a6762795107b6d525a4d73ad3854003f9f7
 
-# Dependencies necessary for unbound
+# mDNS, master 12/2020, 4.6+
+ARG           MDNS_REPO=github.com/openshift/coredns-mdns
+ARG           MDNS_VERSION=d3d4bb1f4a4a0e1619a419a26a3d8dcf2959d990
+
+# Dependencies necessary for unbound - XXX this should be platform dependent
 RUN           apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
                 libunbound-dev=1.9.0-2+deb10u2 \
@@ -89,6 +86,12 @@ RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's
 WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
+
+# Add the mDNS plugin
+# XXX Meh, does not compile. Also, kind of a bad idea, hidding the shit under the carpet.
+#RUN           set -eu; \
+#              printf "coredns-mdns:github.com/openshift/coredns-mdns\n" >> plugin.cfg
+
 # hadolint ignore=DL4006
 RUN           set -eu; \
               if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
@@ -115,7 +118,7 @@ RUN           chmod 555 /dist/boot/bin/*
 FROM          $RUNTIME_BASE
 
 # Get relevant bits from builder
-COPY          --from=builder --chown=$BUILD_UID:root /dist .
+COPY          --from=builder-coredns --chown=$BUILD_UID:root /dist .
 
 ENV           DOMAIN=""
 ENV           EMAIL="dubo-dubon-duponey@farcloser.world"
