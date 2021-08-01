@@ -100,13 +100,13 @@ RUN           --mount=type=secret,uid=100,id=CA \
                 apt-get install -qq --no-install-recommends \
                   libunbound-dev:"$architecture"=1.13.1-1 \
                   nettle-dev:"$architecture"=3.7.3-1 \
-                  libevent-dev:"$architecture"=2.1.12-stable-1 && \
+                  libevent-dev:"$architecture"=2.1.12-stable-1; \
               done
 
 ##########################
 # Builder custom
 ##########################
-FROM          --platform=$BUILDPLATFORM fetcher-main                                                                    AS builder-main
+FROM          --platform=$BUILDPLATFORM fetcher-main                                                                    AS builder-coredns
 
 ARG           TARGETARCH
 ARG           TARGETOS
