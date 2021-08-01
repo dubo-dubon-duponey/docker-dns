@@ -8,8 +8,8 @@ STAGING="${STAGING:-}"
 UPSTREAM_NAME="${UPSTREAM_NAME:-}"
 
 # Ensure the certs folder is writable
-[ -w "/certs" ] || {
-  >&2 printf "/certs is not writable. Check your mount permissions.\n"
+[ -w /certs ] || {
+  printf >&2 "/certs is not writable. Check your mount permissions.\n"
   exit 1
 }
 
@@ -23,7 +23,7 @@ certs::renew(){
 
   [ -e "/certs/certificates/$domain.key" ] || command="run"
 
-  >&2 printf "Running command: %s" "lego  --domains=\"$domain\" \
+  printf >&2 "Running command: %s" "lego  --domains=\"$domain\" \
         --accept-tos --email=\"$email\" --path=/certs --tls $staging --pem \
         --tls.port=:${HTTPS_PORT} \
         ${command}"
