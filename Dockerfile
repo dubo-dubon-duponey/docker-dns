@@ -1,121 +1,174 @@
-ARG           BUILDER_BASE=dubodubonduponey/base:builder
-ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
+ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-09-01@sha256:12be2a6d0a64b59b1fc44f9b420761ad92efe8188177171163b15148b312481a
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-09-01@sha256:28d5eddcbbee12bc671733793c8ea8302d7d79eb8ab9ba0581deeacabd307cf5
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-09-01@sha256:bbd3439247ea1aa91b048e77c8b546369138f910b5083de697f0d36ac21c1a8c
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-09-01@sha256:e5535efb771ca60d2a371cd2ca2eb1a7d6b7b13cc5c4d27d48613df1a041431d
+
+FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
 #######################
-# Extra builder for healthchecker
+# Fetcher
 #######################
-# hadolint ignore=DL3006,DL3029
-FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-lego
 
-ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
-ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           GIT_REPO=github.com/go-acme/lego
+ARG           GIT_VERSION=v4.4.0
+ARG           GIT_COMMIT=7c24212e8a1df8547ca6edb6cf630cff60e62f46
 
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone git://$GIT_REPO .
-RUN           git checkout $GIT_VERSION
-# hadolint ignore=DL4006
-RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w" \
-                -o /dist/boot/bin/dns-health ./cmd/dns
+ENV           WITH_BUILD_SOURCE="./cmd/lego"
+ENV           WITH_BUILD_OUTPUT="lego"
+
+ENV           CGO_ENABLED=1
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
+
+#######################
+# Lego builder
+#######################
+FROM          --platform=$BUILDPLATFORM fetcher-lego                                                                    AS builder-lego
+
+ARG           TARGETARCH
+ARG           TARGETOS
+ARG           TARGETVARIANT
+ENV           GOOS=$TARGETOS
+ENV           GOARCH=$TARGETARCH
+
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
+RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
+              [ "${CGO_ENABLED:-}" != 1 ] || { \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
+                export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
+                export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
+                export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+                export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
+
+#######################
+# Fetcher
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-coredns
+
+ARG           GIT_REPO=github.com/coredns/coredns
+ARG           GIT_VERSION=v1.8.4
+ARG           GIT_COMMIT=053c4d5ca1772517746a854e87ffa971249df14b
+
+ENV           WITH_BUILD_SOURCE=./coredns.go
+ENV           WITH_BUILD_OUTPUT=coredns
+ENV           WITH_LDFLAGS="-X $GIT_REPO/coremain.GitCommit=$GIT_COMMIT"
+
+ENV           CGO_ENABLED=1
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download; \
+              printf "mdns:github.com/openshift/coredns-mdns\n" >> plugin.cfg; \
+              printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
+              go generate coredns.go; \
+              go mod tidy
+# XXX how to pin that?
+
+# hadolint ignore=DL3009
+RUN           --mount=type=secret,uid=100,id=CA \
+              --mount=type=secret,uid=100,id=CERTIFICATE \
+              --mount=type=secret,uid=100,id=KEY \
+              --mount=type=secret,uid=100,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_CONFIG \
+              apt-get update -qq; \
+              for architecture in armel armhf arm64 ppc64el i386 s390x amd64; do \
+                apt-get install -qq --no-install-recommends \
+                  libunbound-dev:"$architecture"=1.13.1-1 \
+                  nettle-dev:"$architecture"=3.7.3-1 \
+                  libevent-dev:"$architecture"=2.1.12-stable-1; \
+              done
 
 ##########################
 # Builder custom
 ##########################
-# hadolint ignore=DL3006,DL3029
-FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder
+FROM          --platform=$BUILDPLATFORM fetcher-coredns                                                                    AS builder-coredns
 
-ARG           GIT_REPO=github.com/coredns/coredns
-# CoreDNS v1.6.9
-#ARG           GIT_VERSION=1766568398e3120c85d44f5c6237a724248b652e
-# CoreDNS v1.7.0
-#ARG           GIT_VERSION=f59c03d09c3a3a12f571ad1087b979325f3dae30
-# CoreDNS v1.8.0
-ARG           GIT_VERSION=054c9ae1fbea39d586652664fbc9a5cedbd97618
-# CoreDNS client
-# ARG           COREDNS_CLIENT_VERSION=af9fb99c870aa91af3f48d61d3565de31e078a89
+ARG           TARGETARCH
+ARG           TARGETOS
+ARG           TARGETVARIANT
+ENV           GOOS=$TARGETOS
+ENV           GOARCH=$TARGETARCH
 
-ARG           LEGO_REPO=github.com/go-acme/lego
-# Lego 3.7.0
-#ARG           LEGO_VERSION=e774e180a51b11a3ba9f3c1784b1cbc7dce1322b
-# Lego 3.8.0
-#ARG           LEGO_VERSION=bcb5be49c87bab63f9bab23823fd79c7f3d4390a
-# Lego 4.1.0
-ARG           LEGO_VERSION=dd4f73dd6a9fc0a4764b8bd639ad1834ad9bde7b
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-ARG           UNBOUND_REPO=github.com/coredns/unbound
-# Unbound, 0.0.6
-#ARG           UNBOUND_VERSION=d78fc1102044102fde63044ce13f55f07d0e1c87
-# Unbound, 0.0.7
-ARG           UNBOUND_VERSION=23331a6762795107b6d525a4d73ad3854003f9f7
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
+RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
+              [ "${CGO_ENABLED:-}" != 1 ] || { \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
+                export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
+                export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
+                export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+                export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
-# Dependencies necessary for unbound
-RUN           apt-get update -qq && \
-              apt-get install -qq --no-install-recommends \
-                libunbound-dev=1.9.0-2+deb10u2 \
-                nettle-dev=3.4.1-1 \
-                libevent-dev=2.1.8-stable-4 && \
-              apt-get -qq autoremove      && \
-              apt-get -qq clean           && \
-              rm -rf /var/lib/apt/lists/* && \
-              rm -rf /tmp/*               && \
-              rm -rf /var/tmp/*
-#                dnsutils=1:9.11.5.P4+dfsg-5.1 \
+RUN           mkdir -p /dist/boot/lib; \
+              eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
+              cp /usr/lib/"$DEB_TARGET_MULTIARCH"/libunbound.so.8    /dist/boot/lib; \
+              cp /lib/"$DEB_TARGET_MULTIARCH"/libpthread.so.0        /dist/boot/lib; \
+              cp /lib/"$DEB_TARGET_MULTIARCH"/libc.so.6              /dist/boot/lib; \
+              cp /usr/lib/"$DEB_TARGET_MULTIARCH"/libevent-2.1.so.7  /dist/boot/lib
 
-# Unbound
-WORKDIR       $GOPATH/src/$UNBOUND_REPO
-RUN           git clone git://$UNBOUND_REPO .
-RUN           git checkout $UNBOUND_VERSION
+#              go get github.com/coredns/unbound; \
 
-# CoreDNS client
-# https://github.com/coredns/client/blob/master/Makefile
-#WORKDIR       $GOPATH/src/github.com/coredns/client
-#RUN           git clone https://github.com/coredns/client.git .
-#RUN           git checkout $COREDNS_CLIENT_VERSION
+#######################
+# Builder assembly, XXX should be auditor
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS builder
 
-# hadolint ignore=DL4006
-#RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w" \
-#               -o dist/dnsgrpc ./cmd/dnsgrpc
+COPY          --from=builder-lego     /dist           /dist
+COPY          --from=builder-coredns  /dist           /dist
 
-# Lego
-# https://github.com/go-acme/lego/blob/master/Makefile
-WORKDIR       $GOPATH/src/$LEGO_REPO
-RUN           git clone git://$LEGO_REPO .
-RUN           git checkout $LEGO_VERSION
+COPY          --from=builder-tools  /boot/bin/dns-health    /dist/boot/bin
 
-# hadolint ignore=DL4006
-RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w -X main.version=$BUILD_VERSION" \
-                -o /dist/boot/bin/lego ./cmd/lego
-
-# https://github.com/coredns/coredns/blob/master/Makefile
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone git://$GIT_REPO .
-RUN           git checkout $GIT_VERSION
-# hadolint ignore=DL4006
-RUN           set -eu; \
-              if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
-                printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
-                export CGO_ENABLED=1; \
-                triplet="$(gcc -dumpmachine)"; \
-                go generate coredns.go; \
-                mkdir -p /dist/boot/lib; \
-                cp /usr/lib/"$triplet"/libunbound.so.8    /dist/boot/lib; \
-                cp /lib/"$triplet"/libpthread.so.0        /dist/boot/lib; \
-                cp /lib/"$triplet"/libc.so.6              /dist/boot/lib; \
-                cp /usr/lib/"$triplet"/libevent-2.1.so.6  /dist/boot/lib; \
-              fi; \
-              env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags="-s -w -X github.com/coredns/coredns/coremain.GitCommit=$BUILD_REVISION" \
-                -o /dist/boot/bin/coredns
-
-COPY          --from=builder-healthcheck /dist/boot/bin /dist/boot/bin
-RUN           chmod 555 /dist/boot/bin/*
+RUN           chmod 555 /dist/boot/bin/*; \
+              epoch="$(date --date "$BUILD_CREATED" +%s)"; \
+              find /dist/boot -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +;
 
 #######################
 # Running image
 #######################
-# hadolint ignore=DL3006
-FROM          $RUNTIME_BASE
+FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME
 
 # Get relevant bits from builder
-COPY          --from=builder --chown=$BUILD_UID:root /dist .
+COPY          --from=builder --chown=$BUILD_UID:root /dist /
 
 ENV           DOMAIN=""
 ENV           EMAIL="dubo-dubon-duponey@farcloser.world"

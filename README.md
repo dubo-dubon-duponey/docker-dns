@@ -12,23 +12,26 @@ This is useful in the following scenarios:
 
 ## Image features
 
- * multi-architecture:
-    * [x] linux/amd64
-    * [x] linux/arm64
-    * [x] linux/arm/v7
-    * [ ] linux/arm/v6 (should build, disabled by default)
- * hardened:
-    * [x] image runs read-only
-    * [x] image runs with no capabilities
-    * [x] process runs as a non-root user, disabled login, no shell
- * lightweight
-    * [x] based on our slim [Debian buster version](https://github.com/dubo-dubon-duponey/docker-debian)
-    * [x] simple entrypoint script
-    * [x] multi-stage build with no installed dependencies for the runtime image
- * observable
-    * [x] healthcheck
-    * [x] log to stdout
-    * [x] prometheus endpoint
+* multi-architecture:
+  * [x] linux/amd64
+  * [x] linux/386
+  * [x] linux/arm64
+  * [x] linux/arm/v7
+  * [x] linux/arm/v6
+  * [x] linux/ppc64le
+  * [x] linux/s390x
+* hardened:
+  * [x] image runs read-only
+  * [x] image runs with no capabilities (unless you want it on a privileged port)
+  * [x] process runs as a non-root user, disabled login, no shell
+* lightweight
+  * [x] based on our slim [Debian Bullseye](https://github.com/dubo-dubon-duponey/docker-debian)
+  * [x] simple entrypoint script
+  * [x] multi-stage build with no installed dependencies for the runtime image
+* observable
+  * [x] healthcheck
+  * [x] log to stdout
+  * [x] prometheus endpoint
 
 ## Run
 
@@ -52,7 +55,7 @@ docker run -d \
     --publish 53:1053/udp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns
+    ghcr.io/dubo-dubon-duponey/dns
 ```
 
 ### TLS server, forwarding
@@ -71,7 +74,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns
+    ghcr.io/dubo-dubon-duponey/dns
 ```
 
 ### Traditional DNS server, recursive
@@ -82,7 +85,7 @@ docker run -d \
     --publish 53:1053/udp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns
+    ghcr.io/dubo-dubon-duponey/dns
 ```
 
 ### TLS server, recursive
@@ -96,7 +99,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns
+    ghcr.io/dubo-dubon-duponey/dns
 ```
 
 For TLS, you do need to expose port 443 publicly from your docker host so that LetsEncrypt can issue your certificate,
@@ -120,7 +123,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns
+    ghcr.io/dubo-dubon-duponey/dns
 ```
 
 ### Networking
@@ -139,7 +142,7 @@ docker run -d \
     --user root \
     --cap-drop ALL \
     --read-only \
-    dubodubonduponey/coredns
+    ghcr.io/dubo-dubon-duponey/dns
 ```
 
 ### Configuration reference
