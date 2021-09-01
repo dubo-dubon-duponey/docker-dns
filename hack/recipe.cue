@@ -29,13 +29,13 @@ cakes: {
 
 			output: {
 				images: {
-					names: [...string] | * ["coredns"],
+					names: [...string] | * ["dns"],
 					tags: [...string] | * ["latest"]
 				}
 			}
 
 			metadata: {
-				title: string | * "Dubo CoreDNS",
+				title: string | * "Dubo DNS",
 				description: string | * "A dubo image for CoreDNS",
 			}
 		}
@@ -44,7 +44,7 @@ cakes: {
 
 injectors: {
 	suite: * "bullseye" | =~ "^(?:jessie|stretch|buster|bullseye|sid)$" @tag(suite, type=string)
-	date: * "2021-08-01" | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
+	date: * "2021-09-01" | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
 	platforms: string @tag(platforms, type=string)
 	registry: * "registry.local" | string @tag(registry, type=string)
 }
