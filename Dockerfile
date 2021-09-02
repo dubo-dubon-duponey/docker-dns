@@ -142,9 +142,14 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 RUN           mkdir -p /dist/boot/lib; \
               eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
               cp /usr/lib/"$DEB_TARGET_MULTIARCH"/libunbound.so.8    /dist/boot/lib; \
-              cp /lib/"$DEB_TARGET_MULTIARCH"/libpthread.so.0        /dist/boot/lib; \
-              cp /lib/"$DEB_TARGET_MULTIARCH"/libc.so.6              /dist/boot/lib; \
               cp /usr/lib/"$DEB_TARGET_MULTIARCH"/libevent-2.1.so.7  /dist/boot/lib
+
+
+# XXX whether or not we want these in depends on how slick we want the future runtime
+#              cp /lib/"$DEB_TARGET_MULTIARCH"/libpthread.so.0        /dist/boot/lib; \
+#              cp /lib/"$DEB_TARGET_MULTIARCH"/libc.so.6              /dist/boot/lib; \
+
+
 
 #              go get github.com/coredns/unbound; \
 
@@ -157,6 +162,11 @@ COPY          --from=builder-lego     /dist           /dist
 COPY          --from=builder-coredns  /dist           /dist
 
 COPY          --from=builder-tools  /boot/bin/dns-health    /dist/boot/bin
+
+RUN           setcap 'cap_net_bind_service+ep'                /dist/boot/bin/coredns
+RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/bin/coredns
+RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/lib/*
+RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/bin/lego
 
 RUN           chmod 555 /dist/boot/bin/*; \
               epoch="$(date --date "$BUILD_CREATED" +%s)"; \
