@@ -163,10 +163,13 @@ COPY          --from=builder-coredns  /dist           /dist
 
 COPY          --from=builder-tools  /boot/bin/dns-health    /dist/boot/bin
 
+# XXX https://mail.openjdk.java.net/pipermail/distro-pkg-dev/2010-May/009112.html
+# no $ORIGIN rpath expansion with caps
+RUN           patchelf --set-rpath '/boot/lib'           /dist/boot/bin/coredns
+RUN           patchelf --set-rpath '/boot/lib'           /dist/boot/lib/*
+RUN           patchelf --set-rpath '/boot/lib'           /dist/boot/bin/lego
+
 RUN           setcap 'cap_net_bind_service+ep'                /dist/boot/bin/coredns
-RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/bin/coredns
-RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/lib/*
-RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/bin/lego
 
 RUN           chmod 555 /dist/boot/bin/*; \
               epoch="$(date --date "$BUILD_CREATED" +%s)"; \
