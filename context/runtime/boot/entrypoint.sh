@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
+root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)"
+readonly root
+# shellcheck source=/dev/null
+source "$root/helpers.sh"
+# shellcheck source=/dev/null
+source "$root/mdns.sh"
+
+helpers::dir::writable /certs
+
+# mDNS blast if asked to
+# XXX informative only, but look into that, and which port to broadcast or not
+#[ ! "$MDNS_HOST" ] || {
+#  [ ! "${MDNS_STATION:-}" ] || mdns::add "_workstation._tcp" "$MDNS_HOST" "${MDNS_NAME:-}" "22"
+#  mdns::add "${MDNS_TYPE:-_http._tcp}" "$MDNS_HOST" "${MDNS_NAME:-}" "22"
+#  mdns::start &
+#}
+
 DOMAIN="${DOMAIN:-}"
 EMAIL="${EMAIL:-}"
 HTTPS_PORT="${HTTPS_PORT:-}"
 STAGING="${STAGING:-}"
 UPSTREAM_NAME="${UPSTREAM_NAME:-}"
-
-# Ensure the certs folder is writable
-[ -w /certs ] || {
-  printf >&2 "/certs is not writable. Check your mount permissions.\n"
-  exit 1
-}
 
 certs::renew(){
   local domain="$1"
@@ -30,7 +41,7 @@ certs::renew(){
 
   lego  --domains="$domain" \
         --accept-tos --email="$email" --path=/certs --tls ${staging} --pem \
-        --tls.port=:${HTTPS_PORT} \
+        --tls.port=:"${HTTPS_PORT}" \
         ${command}
 }
 

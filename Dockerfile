@@ -1,9 +1,9 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-09-01@sha256:12be2a6d0a64b59b1fc44f9b420761ad92efe8188177171163b15148b312481a
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-09-01@sha256:28d5eddcbbee12bc671733793c8ea8302d7d79eb8ab9ba0581deeacabd307cf5
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-09-01@sha256:bbd3439247ea1aa91b048e77c8b546369138f910b5083de697f0d36ac21c1a8c
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-09-01@sha256:e5535efb771ca60d2a371cd2ca2eb1a7d6b7b13cc5c4d27d48613df1a041431d
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-10-15@sha256:33e021267790132e63be2cea08e77d64ec5d0434355734e94f8ff2d90c6f8944
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-10-15@sha256:eb822683575d68ccbdf62b092e1715c676b9650a695d8c0235db4ed5de3e8534
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-10-15@sha256:7072702dab130c1bbff5e5c4a0adac9c9f2ef59614f24e7ee43d8730fae2764c
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-10-15@sha256:e8ec2d1d185177605736ba594027f27334e68d7984bbfe708a0b37f4b6f2dbd7
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -13,8 +13,8 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                  
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-lego
 
 ARG           GIT_REPO=github.com/go-acme/lego
-ARG           GIT_VERSION=v4.4.0
-ARG           GIT_COMMIT=7c24212e8a1df8547ca6edb6cf630cff60e62f46
+ARG           GIT_VERSION=v4.5.3
+ARG           GIT_COMMIT=3675fe68aed2c6c99d1f92eb02133ecd9af7b2be
 
 ENV           WITH_BUILD_SOURCE="./cmd/lego"
 ENV           WITH_BUILD_OUTPUT="lego"
@@ -40,9 +40,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -68,8 +65,8 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-coredns
 
 ARG           GIT_REPO=github.com/coredns/coredns
-ARG           GIT_VERSION=v1.8.4
-ARG           GIT_COMMIT=053c4d5ca1772517746a854e87ffa971249df14b
+ARG           GIT_VERSION=v1.8.6
+ARG           GIT_COMMIT=13a9191efb0574cc92ed5ffd55a1f144b840d668
 
 ENV           WITH_BUILD_SOURCE=./coredns.go
 ENV           WITH_BUILD_OUTPUT=coredns
@@ -117,9 +114,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -162,6 +156,14 @@ COPY          --from=builder-lego     /dist           /dist
 COPY          --from=builder-coredns  /dist           /dist
 
 COPY          --from=builder-tools  /boot/bin/dns-health    /dist/boot/bin
+
+RUN           cp /dist/boot/bin/coredns /dist/boot/bin/coredns_no_cap
+RUN           cp /dist/boot/bin/coredns /dist/boot/bin/coredns_cap+origin
+RUN           setcap 'cap_net_bind_service+ep'                /dist/boot/bin/coredns_cap+origin
+# hadolint ignore=SC2016
+RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/bin/coredns_cap+origin
+# hadolint ignore=SC2016
+RUN           patchelf --set-rpath '$ORIGIN/../lib'           /dist/boot/bin/coredns_no_cap
 
 # XXX https://mail.openjdk.java.net/pipermail/distro-pkg-dev/2010-May/009112.html
 # no $ORIGIN rpath expansion with caps
