@@ -13,9 +13,9 @@ helpers::dir::writable /certs
 # mDNS blast if asked to
 # XXX informative only, but look into that, and which port to broadcast or not
 #[ ! "${MDNS_HOST:-}" ] || {
-#  [ ! "${MDNS_STATION:-}" ] || mdns::add "_workstation._tcp" "$MDNS_HOST" "${MDNS_NAME:-}" "22"
-#  mdns::add "${MDNS_TYPE:-_http._tcp}" "$MDNS_HOST" "${MDNS_NAME:-}" "22"
-#  mdns::start &
+#  [ ! "${MDNS_STATION:-}" ] || mdns::records::add "_workstation._tcp" "$MDNS_HOST" "${MDNS_NAME:-}" "22"
+#  mdns::records::add "${MDNS_TYPE:-_http._tcp}" "$MDNS_HOST" "${MDNS_NAME:-}" "22"
+#  mdns::records::broadcast &
 #}
 
 DOMAIN="${DOMAIN:-}"
