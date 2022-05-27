@@ -1,9 +1,9 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-04-01@sha256:d73bb6ea84152c42e314bc9bff6388d0df6d01e277bd238ee0e6f8ade721856d
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-04-01@sha256:ca513bf0219f654afeb2d24aae233fef99cbcb01991aea64060f3414ac792b3f
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-04-01@sha256:6456b76dd2eedf34b4c5c997f9ad92901220dfdd405ec63419d0b54b6d85a777
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-04-01@sha256:323f3e36da17d8638a07a656e2f17d5ee4dc2b17dfea7e2da36e1b2174cc5f18
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-05-01@sha256:b97738238e9d1423b6de8d5a96f4310ae7039ffa4af19cd6a85f5f70d0faef99
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-05-01@sha256:984cf8672b483ca94333b5b37e19a95b115047dee05955767ed5b1bac1140e0c
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-05-01@sha256:5e44963d961cf7594cf8a0d1bba98fd5da69d7881cb77c142a43ceab230e87df
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-05-01@sha256:6268013e3bd16eaaf7dd15c7689f8740bd00af1149c92795cc42fab4f3c6d07a
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -67,8 +67,8 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-coredns
 
 ARG           GIT_REPO=github.com/coredns/coredns
-ARG           GIT_VERSION=v1.9.1
-ARG           GIT_COMMIT=4b597f8308d8d7cecb538e9831d77117da68c04e
+ARG           GIT_VERSION=v1.9.2
+ARG           GIT_COMMIT=092c144491e7f62d71eda98a07e4ce815d9df035
 
 ENV           WITH_BUILD_SOURCE=./coredns.go
 ENV           WITH_BUILD_OUTPUT=coredns
