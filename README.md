@@ -55,7 +55,7 @@ docker run -d \
     --publish 53:1053/udp \
     --cap-drop ALL \
     --read-only \
-    ghcr.io/dubo-dubon-duponey/dns
+    index.docker.io/dubodubonduponey/dns
 ```
 
 ### TLS server, forwarding
@@ -74,7 +74,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    ghcr.io/dubo-dubon-duponey/dns
+    index.docker.io/dubodubonduponey/dns
 ```
 
 ### Traditional DNS server, recursive
@@ -85,7 +85,7 @@ docker run -d \
     --publish 53:1053/udp \
     --cap-drop ALL \
     --read-only \
-    ghcr.io/dubo-dubon-duponey/dns
+    index.docker.io/dubodubonduponey/dns
 ```
 
 ### TLS server, recursive
@@ -99,7 +99,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    ghcr.io/dubo-dubon-duponey/dns
+    index.docker.io/dubodubonduponey/dns
 ```
 
 For TLS, you do need to expose port 443 publicly from your docker host so that LetsEncrypt can issue your certificate,
@@ -123,7 +123,7 @@ docker run -d \
     --publish 853:1853/tcp \
     --cap-drop ALL \
     --read-only \
-    ghcr.io/dubo-dubon-duponey/dns
+    index.docker.io/dubodubonduponey/dns
 ```
 
 ### Networking
@@ -142,7 +142,7 @@ docker run -d \
     --user root \
     --cap-drop ALL \
     --read-only \
-    ghcr.io/dubo-dubon-duponey/dns
+    index.docker.io/dubodubonduponey/dns
 ```
 
 ### Configuration reference

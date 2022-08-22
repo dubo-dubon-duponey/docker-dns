@@ -1,9 +1,9 @@
-ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+ARG           FROM_REGISTRY=index.docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-05-01@sha256:b97738238e9d1423b6de8d5a96f4310ae7039ffa4af19cd6a85f5f70d0faef99
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-05-01@sha256:984cf8672b483ca94333b5b37e19a95b115047dee05955767ed5b1bac1140e0c
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-05-01@sha256:5e44963d961cf7594cf8a0d1bba98fd5da69d7881cb77c142a43ceab230e87df
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-05-01@sha256:6268013e3bd16eaaf7dd15c7689f8740bd00af1149c92795cc42fab4f3c6d07a
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-08-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-08-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-08-01
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-08-01
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -15,8 +15,8 @@ FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER      
 ARG           GIT_REPO=github.com/go-acme/lego
 #ARG           GIT_VERSION=v4.5.3
 #ARG           GIT_COMMIT=3675fe68aed2c6c99d1f92eb02133ecd9af7b2be
-ARG           GIT_VERSION=v4.6.0
-ARG           GIT_COMMIT=3ad2fa7acb6d0d88499e8bf5c4b63cc77838ae87
+ARG           GIT_VERSION=v4.8.0
+ARG           GIT_COMMIT=175164fb47979f5aec53c3f511d264dd0191ca8e
 
 ENV           WITH_BUILD_SOURCE="./cmd/lego"
 ENV           WITH_BUILD_OUTPUT="lego"
@@ -67,8 +67,8 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-coredns
 
 ARG           GIT_REPO=github.com/coredns/coredns
-ARG           GIT_VERSION=v1.9.2
-ARG           GIT_COMMIT=092c144491e7f62d71eda98a07e4ce815d9df035
+ARG           GIT_VERSION=v1.9.3
+ARG           GIT_COMMIT=45b0a11294c59bfd806a57807aaa2a185f761cd5
 
 ENV           WITH_BUILD_SOURCE=./coredns.go
 ENV           WITH_BUILD_OUTPUT=coredns
