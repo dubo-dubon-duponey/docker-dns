@@ -1,9 +1,9 @@
-ARG           FROM_REGISTRY=index.docker.io/dubodubonduponey
+ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-08-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-08-01
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-08-01
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-08-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-12-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-12-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-12-01
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-12-01
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -15,8 +15,8 @@ FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER      
 ARG           GIT_REPO=github.com/go-acme/lego
 #ARG           GIT_VERSION=v4.5.3
 #ARG           GIT_COMMIT=3675fe68aed2c6c99d1f92eb02133ecd9af7b2be
-ARG           GIT_VERSION=v4.8.0
-ARG           GIT_COMMIT=175164fb47979f5aec53c3f511d264dd0191ca8e
+ARG           GIT_VERSION=v4.9.1
+ARG           GIT_COMMIT=df79f1302276a36da386c7fdf70cbacc284efab9
 
 ENV           WITH_BUILD_SOURCE="./cmd/lego"
 ENV           WITH_BUILD_OUTPUT="lego"
@@ -67,8 +67,8 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-coredns
 
 ARG           GIT_REPO=github.com/coredns/coredns
-ARG           GIT_VERSION=v1.9.3
-ARG           GIT_COMMIT=45b0a11294c59bfd806a57807aaa2a185f761cd5
+ARG           GIT_VERSION=v1.10.0
+ARG           GIT_COMMIT=596a9f9e67dd9b01e15bc04a999460422fe65166
 
 ENV           WITH_BUILD_SOURCE=./coredns.go
 ENV           WITH_BUILD_OUTPUT=coredns
@@ -83,7 +83,8 @@ RUN           --mount=type=secret,id=CA \
               printf "mdns:github.com/openshift/coredns-mdns\n" >> plugin.cfg; \
               printf "unbound:github.com/coredns/unbound\n" >> plugin.cfg; \
               go generate coredns.go; \
-              go mod tidy
+              go mod tidy -compat=1.17
+
 # XXX how to pin that?
 
 # hadolint ignore=DL3009
