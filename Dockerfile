@@ -1,9 +1,9 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-12-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-12-01
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-12-01
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-12-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2023-09-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2023-09-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2023-09-01
+ARG           FROM_IMAGE_TOOLS=tools:linux-bookworm-2023-09-01
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -15,8 +15,8 @@ FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER      
 ARG           GIT_REPO=github.com/go-acme/lego
 #ARG           GIT_VERSION=v4.5.3
 #ARG           GIT_COMMIT=3675fe68aed2c6c99d1f92eb02133ecd9af7b2be
-ARG           GIT_VERSION=v4.9.1
-ARG           GIT_COMMIT=df79f1302276a36da386c7fdf70cbacc284efab9
+ARG           GIT_VERSION=v4.14.0
+ARG           GIT_COMMIT=838eff2c024085ec0b5d37e3c2496d5261240763
 
 ENV           WITH_BUILD_SOURCE="./cmd/lego"
 ENV           WITH_BUILD_OUTPUT="lego"
@@ -67,8 +67,8 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-coredns
 
 ARG           GIT_REPO=github.com/coredns/coredns
-ARG           GIT_VERSION=v1.10.0
-ARG           GIT_COMMIT=596a9f9e67dd9b01e15bc04a999460422fe65166
+ARG           GIT_VERSION=v1.11.1
+ARG           GIT_COMMIT=ae2bbc29be1aaae0b3ded5d188968a6c97bb3144
 
 ENV           WITH_BUILD_SOURCE=./coredns.go
 ENV           WITH_BUILD_OUTPUT=coredns
@@ -96,11 +96,11 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_SOURCES \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq; \
-              for architecture in armel armhf arm64 ppc64el i386 s390x amd64; do \
+              for architecture in arm64 amd64; do \
                 apt-get install -qq --no-install-recommends \
-                  libunbound-dev:"$architecture"=1.13.1-1 \
-                  nettle-dev:"$architecture"=3.7.3-1 \
-                  libevent-dev:"$architecture"=2.1.12-stable-1; \
+                  libunbound-dev:"$architecture"=1.17.1-2 \
+                  nettle-dev:"$architecture"=3.8.1-2 \
+                  libevent-dev:"$architecture"=2.1.12-stable-8; \
               done
 
 ##########################
