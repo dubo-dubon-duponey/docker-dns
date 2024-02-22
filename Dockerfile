@@ -13,10 +13,8 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                  
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-lego
 
 ARG           GIT_REPO=github.com/go-acme/lego
-#ARG           GIT_VERSION=v4.5.3
-#ARG           GIT_COMMIT=3675fe68aed2c6c99d1f92eb02133ecd9af7b2be
-ARG           GIT_VERSION=v4.14.0
-ARG           GIT_COMMIT=838eff2c024085ec0b5d37e3c2496d5261240763
+ARG           GIT_VERSION=v4.15.0
+ARG           GIT_COMMIT=46fe435c2c2e447ae48df712eca8278bbca8986e
 
 ENV           WITH_BUILD_SOURCE="./cmd/lego"
 ENV           WITH_BUILD_OUTPUT="lego"
@@ -188,32 +186,37 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME
 # Get relevant bits from builder
 COPY          --from=builder --chown=$BUILD_UID:root /dist /
 
-ENV           DOMAIN=""
-ENV           EMAIL="dubo-dubon-duponey@farcloser.world"
-ENV           UPSTREAM_SERVER_1=""
-ENV           UPSTREAM_SERVER_2=""
-ENV           UPSTREAM_NAME=""
-ENV           STAGING=""
+ENV           DNS_OVER_TLS_ENABLED=false
+ENV           DNS_OVER_TLS_DOMAIN=""
+ENV           DNS_OVER_TLS_PORT=853
+ENV           DNS_OVER_TLS_LEGO_PORT=443
+ENV           DNS_OVER_TLS_LEGO_EMAIL="dubo-dubon-duponey@farcloser.world"
+ENV           DNS_OVER_TLS_LE_USE_STAGING=false
 
-ENV           DNS_PORT=1053
-ENV           TLS_PORT=1853
-ENV           HTTPS_PORT=1443
-ENV           GRPC_PORT=5553
+ENV           DNS_FORWARD_ENABLED=true
+ENV           DNS_FORWARD_UPSTREAM_NAME="cloudflare-dns.com"
+ENV           DNS_FORWARD_UPSTREAM_IP_1="tls://1.1.1.1"
+ENV           DNS_FORWARD_UPSTREAM_IP_2="tls://1.0.0.1"
+
+ENV           DNS_PORT=53
+ENV           DNS_OVER_GRPC_PORT=553
+ENV           DNS_STUFF_MDNS=false
+
 ENV           METRICS_PORT=9253
 
 # NOTE: this will not be updated at runtime and will always EXPOSE default values
 # Either way, EXPOSE does not do anything, except function as a documentation helper
 EXPOSE        $DNS_PORT/udp
-EXPOSE        $TLS_PORT/tcp
-EXPOSE        $HTTPS_PORT/tcp
-EXPOSE        $GRPC_PORT/tcp
+EXPOSE        $DNS_OVER_TLS_PORT/tcp
+EXPOSE        $DNS_OVER_TLS_LEGO_PORT/tcp
+EXPOSE        $DNS_OVER_GRPC_PORT/tcp
 EXPOSE        $METRICS_PORT/tcp
 
 # Lego just needs /certs to work
 VOLUME        /certs
 
 ENV           HEALTHCHECK_URL="127.0.0.1:$DNS_PORT"
-ENV           HEALTHCHECK_QUESTION=healthcheck-dns.farcloser.world
+ENV           HEALTHCHECK_QUESTION=dns.autonomous.healthcheck.farcloser.world
 ENV           HEALTHCHECK_TYPE=udp
 
 HEALTHCHECK   --interval=120s --timeout=30s --start-period=10s --retries=1 CMD dns-health || exit 1
