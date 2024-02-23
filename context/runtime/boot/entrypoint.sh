@@ -8,6 +8,8 @@ source "$root/helpers.sh"
 
 helpers::dir::writable /certs
 
+LOG_LEVEL=${LOG_LEVEL:-}
+
 # DNS over tls settings
 DNS_OVER_TLS_ENABLED="${DNS_OVER_TLS_ENABLED:-}"
 DNS_OVER_TLS_DOMAIN="${DNS_OVER_TLS_DOMAIN:-}"
@@ -24,7 +26,7 @@ DNS_FORWARD_UPSTREAM_IP_2="${DNS_FORWARD_UPSTREAM_IP_2:-}"
 
 # Other DNS settings
 DNS_PORT="${DNS_PORT:-}"
-DNS_OVER_GRPC_PORT="${DNS_OVER_GRPC_PORT:-}"
+# DNS_OVER_GRPC_PORT="${DNS_OVER_GRPC_PORT:-}"
 DNS_STUFF_MDNS="${DNS_STUFF_MDNS:-}"
 
 # Metrics settings
@@ -66,10 +68,10 @@ loop(){
   done
 }
 
-no_tls=-no
+with_tls=
 # If we have a domain, get certificates for that, and the appropriate config
 if [ "$DNS_OVER_TLS_ENABLED" == true ]; then
-  no_tls=
+  with_tls="+tls"
 
   # Initial registration, blocking
   certs::renew "$DNS_OVER_TLS_DOMAIN" "$DNS_OVER_TLS_LEGO_EMAIL" "$DNS_OVER_TLS_PORT" "$DNS_OVER_TLS_LE_USE_STAGING"
@@ -80,7 +82,12 @@ fi
 
 # Choose config based on environment values
 [ "$DNS_FORWARD_ENABLED" == true ]  && mode=forward || mode=recursive
-[ "$DNS_STUFF_MDNS" == true ]  && mod=-mdns || mod=
+[ "$DNS_STUFF_MDNS" == true ]  && with_mdns=+mdns || with_mdns=
+
+args=(-conf "/config/coredns-${mode}${with_tls}${with_mdns}.conf")
+
+normalized_log_level="$(printf "%s" "$LOG_LEVEL" | tr '[:upper:]' '[:lower:]')"
+[ "$normalized_log_level" != "error" ] && [ "$normalized_log_level" != "warning" ]  || args+=(-quiet)
 
 # Get coredns started
-exec coredns -conf /config/coredns${no_tls}-tls-${mode}${mod}.conf "$@"
+exec coredns "${args[@]}" "$@"
