@@ -171,7 +171,9 @@ For forwarding:
 You can also tweak the following:
 
  * DNS_PORT (default to 53)
+<!--
  * DNS_OVER_GRPC_PORT (default to 553)
+-->
  * DNS_STUFF_MDNS: convenient little trick to respond for certain mDNS queries over traditional DNS
  * METRICS_PORT for Prometheuse (default to 9253)
 

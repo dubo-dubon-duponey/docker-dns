@@ -199,7 +199,7 @@ ENV           DNS_FORWARD_UPSTREAM_IP_1="tls://1.1.1.1"
 ENV           DNS_FORWARD_UPSTREAM_IP_2="tls://1.0.0.1"
 
 ENV           DNS_PORT=53
-ENV           DNS_OVER_GRPC_PORT=553
+# ENV           DNS_OVER_GRPC_PORT=553
 ENV           DNS_STUFF_MDNS=false
 
 ENV           METRICS_PORT=9253
@@ -209,7 +209,7 @@ ENV           METRICS_PORT=9253
 EXPOSE        $DNS_PORT/udp
 EXPOSE        $DNS_OVER_TLS_PORT/tcp
 EXPOSE        $DNS_OVER_TLS_LEGO_PORT/tcp
-EXPOSE        $DNS_OVER_GRPC_PORT/tcp
+#EXPOSE        $DNS_OVER_GRPC_PORT/tcp
 EXPOSE        $METRICS_PORT/tcp
 
 # Lego just needs /certs to work
