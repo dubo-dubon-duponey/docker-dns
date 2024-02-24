@@ -30,7 +30,7 @@ DNS_PORT="${DNS_PORT:-}"
 DNS_STUFF_MDNS="${DNS_STUFF_MDNS:-}"
 
 # Metrics settings
-METRICS_PORT="${METRICS_PORT:-}"
+METRICS_LISTEN="${METRICS_LISTEN:-}"
 
 certs::renew(){
   local domain="$1"
