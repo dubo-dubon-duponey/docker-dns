@@ -175,7 +175,7 @@ You can also tweak the following:
  * DNS_OVER_GRPC_PORT (default to 553)
 -->
  * DNS_STUFF_MDNS: convenient little trick to respond for certain mDNS queries over traditional DNS
- * METRICS_PORT for Prometheuse (default to 9253)
+ * METRICS_LISTEN for Prometheus (default to :9253)
 
 Of course using any privileged port for these requires CAP_NET_BIND_SERVICE.
 
