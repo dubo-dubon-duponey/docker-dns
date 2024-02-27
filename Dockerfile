@@ -1,9 +1,9 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2023-09-05
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2023-09-05
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2023-09-05
-ARG           FROM_IMAGE_TOOLS=tools:linux-bookworm-2023-09-05
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-02-20
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-02-20
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-02-20
+ARG           FROM_IMAGE_TOOLS=tools:linux-bookworm-2024-02-20
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -96,7 +96,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
               apt-get update -qq; \
               for architecture in arm64 amd64; do \
                 apt-get install -qq --no-install-recommends \
-                  libunbound-dev:"$architecture"=1.17.1-2 \
+                  libunbound-dev:"$architecture"=1.17.1-2+deb12u2 \
                   nettle-dev:"$architecture"=3.8.1-2 \
                   libevent-dev:"$architecture"=2.1.12-stable-8; \
               done
