@@ -13,8 +13,8 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                  
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-lego
 
 ARG           GIT_REPO=github.com/go-acme/lego
-ARG           GIT_VERSION=v4.15.0
-ARG           GIT_COMMIT=46fe435c2c2e447ae48df712eca8278bbca8986e
+ARG           GIT_VERSION=v4.16.1
+ARG           GIT_COMMIT=40dcce60be3dbbd0ae05b789e486341b6741e2ae
 
 ENV           WITH_BUILD_SOURCE="./cmd/lego"
 ENV           WITH_BUILD_OUTPUT="lego"
