@@ -202,7 +202,9 @@ ENV           DNS_PORT=53
 # ENV           DNS_OVER_GRPC_PORT=553
 ENV           DNS_STUFF_MDNS=false
 
-ENV           METRICS_LISTEN=:9253
+# XXX cannot be disabled through this variable
+ENV           MOD_METRICS_ENABLED=true
+ENV           MOD_METRICS_BIND=:4242
 
 # NOTE: this will not be updated at runtime and will always EXPOSE default values
 # Either way, EXPOSE does not do anything, except function as a documentation helper
@@ -210,7 +212,7 @@ EXPOSE        $DNS_PORT/udp
 EXPOSE        $DNS_OVER_TLS_PORT/tcp
 EXPOSE        $DNS_OVER_TLS_LEGO_PORT/tcp
 #EXPOSE        $DNS_OVER_GRPC_PORT/tcp
-EXPOSE        $METRICS_LISTEN/tcp
+EXPOSE        $MOD_METRICS_BIND/tcp
 
 # Lego just needs /certs to work
 VOLUME        /certs
