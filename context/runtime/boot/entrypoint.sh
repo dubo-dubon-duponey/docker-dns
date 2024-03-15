@@ -4,7 +4,7 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)"
 readonly root
 # shellcheck source=/dev/null
-source "$root/helpers.sh"
+. "$root/helpers.sh"
 
 helpers::dir::writable /certs
 
@@ -30,7 +30,7 @@ DNS_PORT="${DNS_PORT:-}"
 DNS_STUFF_MDNS="${DNS_STUFF_MDNS:-}"
 
 # Metrics settings
-METRICS_LISTEN="${METRICS_LISTEN:-}"
+MOD_METRICS_BIND="${MOD_METRICS_BIND:-}"
 
 certs::renew(){
   local domain="$1"

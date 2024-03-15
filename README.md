@@ -7,7 +7,7 @@ This is based on [CoreDNS](https://coredns.io/), and [Let's Encrypt](https://let
 This is useful in the following scenarios:
 
 1. you want to run a *local* DNS server on your LAN (or your laptop) that will forward requests with encryption to an upstream resolver
-    ( like Cloudflare, Quad9, Google, or any other DoT public resolver)
+    (like Cloudflare, Quad9, Google, or any other DoT public resolver)
 1. you want to run your own DNS over TLS (recursive) service
 1. other stuff
 
@@ -19,21 +19,14 @@ Before running this publicly on the internet, you should think twice though, and
   * [x] linux/amd64
   * [x] linux/arm64
 
-* multi-architecture (not publishing anymore)
-  * [x] linux/386
-  * [x] linux/arm/v7
-  * [x] linux/arm/v6
-  * [x] linux/ppc64le
-  * [x] linux/s390x
-* 
 * hardened:
   * [x] image runs read-only
-  * [x] image runs with no capabilities but NET_BIND_SERVICE, which you could remove if you use unprivileged ports
+  * [x] image runs with no capabilities (you need NET_BIND_SERVICE if you want to use privileged ports obviously)
   * [x] process runs as a non-root user, disabled login, no shell
 * lightweight
-  * [x] based on our slim [Debian Bullseye](https://github.com/dubo-dubon-duponey/docker-debian)
+  * [x] based on our slim [Debian Bookworm](https://github.com/dubo-dubon-duponey/docker-debian)
   * [x] simple entrypoint script
-  * [x] multi-stage build with no installed dependencies for the runtime image
+  * [x] multi-stage build with zero packages installed in the runtime image
 * observable
   * [x] healthcheck
   * [x] log to stdout
@@ -175,7 +168,7 @@ You can also tweak the following:
  * DNS_OVER_GRPC_PORT (default to 553)
 -->
  * DNS_STUFF_MDNS: convenient little trick to respond for certain mDNS queries over traditional DNS
- * METRICS_LISTEN for Prometheus (default to :9253)
+ * MOD_METRICS_BIND for Prometheus (default to :4242)
 
 Of course using any privileged port for these requires CAP_NET_BIND_SERVICE.
 
@@ -183,7 +176,7 @@ Finally, any additional arguments provided when running the image will get fed t
 
 ### Prometheus
 
-The default configuration files expose a Prometheus metrics endpoint on port 9253.
+The default configuration files expose a Prometheus metrics endpoint on port 4242.
 
 ## Moar?
 
