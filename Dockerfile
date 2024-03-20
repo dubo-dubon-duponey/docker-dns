@@ -214,8 +214,8 @@ EXPOSE        $DNS_OVER_TLS_LEGO_PORT/tcp
 #EXPOSE        $DNS_OVER_GRPC_PORT/tcp
 EXPOSE        $MOD_METRICS_BIND/tcp
 
-# Lego just needs /certs to work
-VOLUME        /certs
+# Lego just needs certs to work
+VOLUME        "$XDG_DATA_HOME"
 
 ENV           HEALTHCHECK_URL="127.0.0.1:$DNS_PORT"
 ENV           HEALTHCHECK_QUESTION=dns.autonomous.healthcheck.farcloser.world
