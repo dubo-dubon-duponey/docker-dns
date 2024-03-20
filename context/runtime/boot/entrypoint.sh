@@ -6,7 +6,7 @@ readonly root
 # shellcheck source=/dev/null
 . "$root/helpers.sh"
 
-helpers::dir::writable /certs
+helpers::dir::writable "$XDG_DATA_HOME"
 
 LOG_LEVEL=${LOG_LEVEL:-}
 
@@ -43,17 +43,17 @@ certs::renew(){
     && staging= \
     || staging="--server=https://acme-staging-v02.api.letsencrypt.org/directory"
 
-  [ -e "/certs/certificates/$domain.key" ] || command="run"
+  [ -e "$XDG_DATA_HOME/certificates/$domain.key" ] || command="run"
 
   printf >&2 "Running command: %s" "lego  --domains=\"$domain\" \
-        --accept-tos --email=\"$email\" --path=/certs --tls $staging --pem \
+        --accept-tos --email=\"$email\" --path=\"$XDG_DATA_HOME\" --tls $staging --pem \
         --tls.port=:$port \
         ${command}"
 
   lego  --domains="$domain" \
         --accept-tos \
         --email="$email" \
-        --path=/certs \
+        --path="$XDG_DATA_HOME" \
         --tls $staging --pem \
         --tls.port=:"$port" \
         ${command}
@@ -84,7 +84,7 @@ fi
 [ "$DNS_FORWARD_ENABLED" == true ]  && mode=forward || mode=recursive
 [ "$DNS_STUFF_MDNS" == true ]  && with_mdns=+mdns || with_mdns=
 
-args=(-conf "/config/coredns-${mode}${with_tls}${with_mdns}.conf")
+args=(-conf "$XDG_CONFIG_DIRS/coredns-${mode}${with_tls}${with_mdns}.conf")
 
 normalized_log_level="$(printf "%s" "$LOG_LEVEL" | tr '[:upper:]' '[:lower:]')"
 [ "$normalized_log_level" != "error" ] && [ "$normalized_log_level" != "warning" ]  || args+=(-quiet)
